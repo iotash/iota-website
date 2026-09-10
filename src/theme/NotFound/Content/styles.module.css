@@ -1,0 +1,137 @@
+.page {
+  max-width: 840px;
+  margin-inline: auto;
+}
+
+.code {
+  margin: 0;
+  font-family: var(--iota-font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--iota-text-3);
+}
+
+.title {
+  margin: 18px 0 0;
+  font-family: var(--iota-font-display);
+  font-size: 46px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.lead {
+  margin: 16px 0 0;
+  max-width: 62ch;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ifm-color-content-secondary);
+}
+
+/* The terminal keeps the dark palette in both themes (§2). */
+.terminal {
+  width: 600px;
+  max-width: 100%;
+  margin-top: 36px;
+  background-color: var(--iota-term-bg);
+  border-radius: var(--iota-radius-lg);
+  overflow: hidden;
+}
+
+.termTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  background-color: var(--iota-term-chrome);
+}
+.termName {
+  margin-left: 8px;
+  font-family: var(--iota-font-mono);
+  font-size: 11.5px;
+  color: var(--iota-term-dim);
+}
+
+.dotRed,
+.dotAmber,
+.dotGreen {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.dotRed { background-color: #F47B7B; }
+.dotAmber { background-color: #F2B33D; }
+.dotGreen { background-color: #4AD38A; }
+
+.termBody {
+  padding: 16px 18px;
+  overflow-x: auto;
+  font-family: var(--iota-font-mono);
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--iota-term-text);
+  white-space: pre;
+}
+
+.teal { color: var(--iota-term-teal); }
+.amber { color: var(--iota-term-amber); }
+.dim { color: var(--iota-term-dim); }
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.secondary {
+  color: var(--ifm-font-color-base);
+  background-color: var(--ifm-background-color);
+  border: 1px solid var(--ifm-toc-border-color);
+}
+.secondary:hover {
+  color: var(--ifm-font-color-base);
+  border-color: var(--iota-border-strong);
+}
+
+.overline {
+  margin: 48px 0 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--iota-text-3);
+}
+
+.recovery {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px;
+  background-color: var(--ifm-background-surface-color);
+  border-radius: var(--iota-radius-md);
+  color: inherit;
+}
+.card:hover { text-decoration: none; color: inherit; background-color: var(--iota-surface-2); }
+
+.cardTitle {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ifm-font-color-base);
+}
+.cardNote {
+  font-size: 12.5px;
+  color: var(--iota-text-3);
+}
+
+@media (max-width: 768px) {
+  .title { font-size: 32px; }
+  .recovery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .termBody { font-size: 12px; }
+}

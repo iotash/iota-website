@@ -1,0 +1,12 @@
+breaking:
+  label: breaking
+  permalink: /breaking
+  description: Changes that need an edit to your config or your habits.
+feature:
+  label: feature
+  permalink: /feature
+  description: New behaviour.
+fix:
+  label: fix
+  permalink: /fix
+  description: Something that was wrong and no longer is.

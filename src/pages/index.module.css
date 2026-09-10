@@ -1,0 +1,320 @@
+/* Homepage — a single 680 px column inside the page (design/DESIGN.md §6). */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--ifm-background-color);
+}
+
+/* 1 — a 56 px top bar: the wordmark, then three plain mono text links. */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 56px;
+  padding: 0 calc((100% - 680px) / 2);
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+}
+
+.topbarLogo {
+  display: flex;
+  align-items: center;
+  color: var(--ifm-color-primary);
+}
+.topbarLogo:hover { color: var(--ifm-color-primary-dark); }
+
+.topbarLinks {
+  display: flex;
+  gap: 22px;
+  margin-left: auto;
+  font-family: var(--iota-font-mono);
+  font-size: 13px;
+}
+.topbarLinks a { color: var(--ifm-color-content-secondary); }
+.topbarLinks a:hover { color: var(--ifm-color-primary); text-decoration: none; }
+
+.column {
+  flex: 1;
+  width: 680px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 84px 0 88px;
+}
+
+/* 2 — the positioning sentence, then one sentence of explanation. */
+.headline {
+  margin: 0;
+  font-family: var(--iota-font-display);
+  font-size: 38px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.026em;
+  color: var(--ifm-font-color-base);
+}
+
+.lead {
+  margin: 18px 0 0;
+  font-size: 17.5px;
+  line-height: 1.6;
+  color: var(--ifm-color-content-secondary);
+}
+
+/* 3 — the install command in a copyable box. */
+.install {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+  padding: 12px 14px;
+  background-color: var(--ifm-code-background);
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--iota-radius-md);
+}
+
+.prompt {
+  font-family: var(--iota-font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ifm-color-primary);
+}
+
+.command {
+  flex: 1;
+  overflow-x: auto;
+  font-family: var(--iota-font-mono);
+  font-size: 13.5px;
+  color: var(--ifm-font-color-base);
+  background: none;
+  border: 0;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 5px 9px;
+  font-family: var(--iota-font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ifm-color-content-secondary);
+  background-color: var(--iota-surface-2);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.copy:hover { color: var(--ifm-color-primary); }
+
+.alt {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 0;
+  font-family: var(--iota-font-mono);
+  font-size: 12px;
+  color: var(--iota-text-3);
+}
+.alt code {
+  font-size: 12px;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+/* 4 — four facts on one line. */
+.facts {
+  margin: 16px 0 0;
+  font-family: var(--iota-font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--iota-text-3);
+}
+
+/* 5 — the terminal transcript, the only picture on the page. It keeps the
+   dark palette in both themes (§2). */
+.terminal {
+  margin-top: 48px;
+  background-color: var(--iota-term-bg);
+  border: 1px solid var(--iota-term-border);
+  border-radius: var(--iota-radius-lg);
+  overflow: hidden;
+}
+
+.termTitle,
+.termStatus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--iota-font-mono);
+  font-size: 11px;
+  color: var(--iota-term-dim);
+  background-color: var(--iota-term-chrome);
+}
+.termTitle { padding: 10px 14px; border-bottom: 1px solid var(--iota-term-border); }
+.termStatus { padding: 8px 14px; border-top: 1px solid var(--iota-term-border); }
+
+.termBody {
+  padding: 16px 18px;
+  overflow-x: auto;
+  font-family: var(--iota-font-mono);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--iota-term-text);
+}
+
+.termLine { white-space: pre; }
+.termGap { height: 12px; }
+.termGapSm { height: 10px; }
+
+.termCode {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 10px 12px;
+  background-color: var(--iota-term-code);
+  border-radius: 6px;
+  font-family: var(--iota-font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--iota-term-muted);
+  white-space: pre;
+}
+
+.dim   { color: var(--iota-term-dim); }
+.faint { color: var(--iota-term-faint); }
+.green { color: var(--iota-term-green); }
+.teal  { color: var(--iota-term-teal); }
+.amber { color: var(--iota-term-amber); }
+.amberBold { color: var(--iota-term-amber); font-weight: 700; }
+.caretMark { color: var(--iota-term-teal); font-weight: 700; }
+
+.caret {
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  vertical-align: -3px;
+  background-color: var(--iota-term-amber);
+}
+
+.caption {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--iota-text-3);
+}
+
+/* 6 / 7 — the two prose sections, each under a mono section mark. */
+.sectionMark,
+.sectionMarkTight {
+  margin: 60px 0 0;
+  font-family: var(--iota-font-mono);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--iota-text-3);
+}
+
+.sectionMarkTight { margin-top: 52px; }
+
+.philosophy {
+  margin: 14px 0 0;
+  font-size: 16px;
+  line-height: 1.85;
+  color: var(--ifm-font-color-base);
+}
+
+.lists {
+  display: flex;
+  gap: 36px;
+  margin-top: 16px;
+}
+.list { flex: 1; min-width: 0; }
+
+.listHeadDoes,
+.listHeadNot {
+  margin: 0 0 10px;
+  font-family: var(--iota-font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.listHeadDoes { color: var(--ifm-color-success); }
+.listHeadNot  { color: var(--iota-text-3); }
+
+.item {
+  display: flex;
+  gap: 9px;
+  margin: 0 0 10px;
+  padding: 2px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ifm-color-content-secondary);
+}
+.item:last-child { margin-bottom: 0; }
+.item svg { flex: none; margin-top: 3px; }
+.iconDoes { color: var(--ifm-color-success); }
+.iconNot  { color: var(--iota-text-3); }
+
+/* 8 — three text links out, each with half a line of context. */
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin-top: 52px;
+}
+
+.linkRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+}
+.arrow {
+  font-family: var(--iota-font-mono);
+  font-size: 13.5px;
+  color: var(--ifm-color-primary);
+}
+.linkRow a {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+}
+.linkNote {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--iota-text-3);
+}
+
+/* 9 — a 56 px footer. */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 calc((100% - 680px) / 2);
+  border-top: 1px solid var(--ifm-toc-border-color);
+  font-family: var(--iota-font-mono);
+  font-size: 12px;
+  color: var(--iota-text-3);
+}
+
+/* Mobile — the same column at 390, with the two lists stacked (§6). */
+@media (max-width: 768px) {
+  .topbar,
+  .footer { padding: 0 18px; }
+  .column { width: 100%; padding: 48px 18px 56px; }
+  .headline { font-size: 29px; }
+  .lead { font-size: 16px; }
+  .lists { flex-direction: column; gap: 28px; }
+  .termBody { font-size: 12px; }
+  .alt { flex-wrap: wrap; }
+  .linkRow { flex-wrap: wrap; }
+}
+
+@media (max-width: 420px) {
+  .topbarLinks { gap: 16px; font-size: 12px; }
+}
