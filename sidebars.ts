@@ -22,7 +22,7 @@ const sidebars: SidebarsConfig = {
       items: ['builtin-toolsets', 'mcp'],
     },
     'agent-mode',
-    'chat-commands',
+    'slash-commands',
     'examples',
   ],
 };

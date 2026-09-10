@@ -1,13 +1,13 @@
 ---
 id: image-generation
 title: Image generation
-description: Image-capable chat models, the dedicated imagen and images provider types, /edit and /redo.
+description: Image-capable models, the dedicated imagen and images provider types, /edit and /redo.
 sidebar_label: Image generation
 ---
 
 # Image generation
 
-Image-capable models generate straight into the chat: with a Gemini image
+Image-capable models generate straight into the conversation: with a Gemini image
 model (e.g. `gemini-3.1-flash-image`) just ask — the picture renders inline
 as ANSI half-block art (capped well below a screenful, indented like other
 blocks), and is saved INSIDE the session bundle (`<session>/images/` —
@@ -63,7 +63,7 @@ models:
     negative_prompt: "blurry, watermark"
 ```
 
-The same knobs are adjustable mid-chat: `/model` grows **Aspect**, **Size**,
+The same knobs are adjustable mid-session: `/model` grows **Aspect**, **Size**,
 and **Negative** tabs for image providers (a "default" row omits the
 parameter), persisted with the session and replayed on resume. Only the tabs
 a dialect actually has appear.
@@ -87,7 +87,7 @@ streaming form at all, so those turns show only the elapsed clock.
 The edit endpoint comes in two wire flavors: OpenAI's native
 `/images/edits` is multipart, while some backends (xAI) accept only a JSON
 body and reject multipart outright. Set `json_edits: true` for those, or
-flip the **JSON edits** tab on `/model` mid-chat (persisted with the
+flip the **JSON edits** tab on `/model` mid-session (persisted with the
 session). Generation is unaffected either way.
 
 Parameter and editing support varies by backend: relays map the full set

@@ -1,11 +1,11 @@
 ---
-id: chat-commands
-title: Chat commands
+id: slash-commands
+title: Slash commands
 description: Every slash command available in an interactive session, and the keys that drive it.
-sidebar_label: Chat commands
+sidebar_label: Slash commands
 ---
 
-# Chat commands
+# Slash commands
 
 In interactive mode, the following commands are available. When the line starts
 with `/`, a suggestion row appears below the input and narrows as you keep typing;

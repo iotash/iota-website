@@ -8,8 +8,8 @@ sidebar_label: MCP servers
 # MCP servers
 
 iota connects to external MCP tool servers (filesystem, GitHub, databases,
-etc.) and lets AI providers use them during chat. Tool names are namespaced
-per server (`mcp__<server>__<tool>`), so same-named tools never collide.
+etc.) and lets an agent call them. Tool names are namespaced per server
+(`mcp__<server>__<tool>`), so same-named tools never collide.
 
 ## From the command line
 
@@ -17,10 +17,10 @@ per server (`mcp__<server>__<tool>`), so same-named tools never collide.
 
 ```bash
 # an ad-hoc stdio server
-iota openai -M gpt-4o --mcp "npx -y @modelcontextprotocol/server-filesystem /tmp"
+iota run default --mcp "npx -y @modelcontextprotocol/server-filesystem /tmp"
 
 # several at once, stdio and HTTP
-iota anthropic -M claude-sonnet-4-20250514 \
+iota run default \
   --mcp "npx -y @modelcontextprotocol/server-filesystem /tmp" \
   --mcp "https://mcp.example.com/sse"
 ```
@@ -28,7 +28,7 @@ iota anthropic -M claude-sonnet-4-20250514 \
 ## From the config file
 
 Servers declared under `mcp_servers:` are loaded automatically, so
-`iota openai -M gpt-4o` already has them:
+`iota run default` already has them:
 
 ```yaml title="~/.iota.yaml"
 mcp_servers:

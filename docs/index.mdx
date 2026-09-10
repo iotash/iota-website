@@ -9,11 +9,15 @@ hide_table_of_contents: true
 
 # Documentation
 
-iota is a chat CLI, not a framework. Install it, point it at a provider, and
-start typing. Everything below is optional until you want it.
+iota is an agent CLI, not a framework. You configure agents — a model, a
+prompt, a set of tools — in `~/.iota.yaml`, and run them: `iota run <agent>`,
+or a bare `iota` for the agent called `default`.
 
 ```bash
 cargo install --git https://github.com/joyqi/iota
+iota config init          # writes ~/.iota.yaml with one provider, one model and agents.default
+export OPENAI_API_KEY=…   # or put `key:` in the file
+iota                      # runs agents.default
 ```
 
 <p className="overline">Start here</p>
@@ -24,8 +28,8 @@ cargo install --git https://github.com/joyqi/iota
     <span className="docCard__body">Homebrew, cargo, or a build from source. macOS and Linux.</span>
   </a>
   <a className="docCard" href="/docs/quick-start">
-    <span className="docCard__title">Your first chat</span>
-    <span className="docCard__body">How iota is invoked, every flag it takes, and where the API key comes from.</span>
+    <span className="docCard__title">Your first run</span>
+    <span className="docCard__body">The five commands, the nine flags, and where the API key comes from.</span>
   </a>
   <a className="docCard" href="/docs/config-file">
     <span className="docCard__title">The config file</span>
@@ -41,18 +45,18 @@ cargo install --git https://github.com/joyqi/iota
   </a>
   <a className="docCard" href="/docs/agent-mode">
     <span className="docCard__title">Agent mode</span>
-    <span className="docCard__body">AGENTS.md overlays, Agent Skills, project-scoped sessions.</span>
+    <span className="docCard__body">workspace: true — AGENTS.md overlays, Agent Skills, project-scoped sessions.</span>
   </a>
   <a className="docCard" href="/docs/image-generation">
     <span className="docCard__title">Image generation</span>
     <span className="docCard__body">imagen and images providers, /edit, /redo, inline rendering.</span>
   </a>
-  <a className="docCard" href="/docs/chat-commands">
-    <span className="docCard__title">Chat commands</span>
+  <a className="docCard" href="/docs/slash-commands">
+    <span className="docCard__title">Slash commands</span>
     <span className="docCard__body">Every slash command, and the keys that drive a session.</span>
   </a>
   <a className="docCard" href="/docs/examples">
     <span className="docCard__title">Examples</span>
-    <span className="docCard__body">Invocations, from an interactive chat to headless runs and attachments.</span>
+    <span className="docCard__body">Invocations, from an interactive run to headless turns and attachments.</span>
   </a>
 </div>

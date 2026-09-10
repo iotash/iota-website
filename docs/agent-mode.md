@@ -1,14 +1,15 @@
 ---
 id: agent-mode
 title: Agent mode
-description: AGENTS.md overlays, Agent Skills, load_skill, and project-scoped sessions.
+description: workspace true — AGENTS.md overlays, Agent Skills, load_skill, and project-scoped sessions.
 sidebar_label: Agent mode
 ---
 
 # Agent mode
 
-Agent mode is explicitly opt-in — pass `--agent`, or set `workspace: true` on
-an agent in the config file. Off means exactly the ordinary chat behavior.
+Agent mode is explicitly opt-in — set `workspace: true` on an agent in the
+config file. Off, the agent runs with just its own prompt and tools: no project
+overlay, no skills, no project-scoped sessions.
 
 ```yaml
 agents:
@@ -54,7 +55,7 @@ that is sent.
 ## `skills` — `load_skill`
 
 Agent mode auto-enables the `skills` toolset (it was called `agent` before the
-config split). Its `load_skill` tool activates a skill by name: it returns the
+config split, where the word became the name of a layer). Its `load_skill` tool activates a skill by name: it returns the
 skill's instructions (the `SKILL.md` body) and directory, and the optional
 `file` argument reads a file bundled inside that directory — reads never leave
 the skill's directory. Output is size-capped with an optional `offset`/`limit`
@@ -63,16 +64,16 @@ other, agent mode or not.
 
 ## Child agents
 
-iota has no delegation tool: a child agent is `iota <agent> -m "<task>"` run
-from `bash`. It is a full run of that `agents:` entry — its own model, tools,
-MCP servers and session. See [child
+iota has no delegation tool: a child agent is `iota run <agent> -m "<task>"`
+run from `bash`. It is a full run of that `agents:` entry — its own model,
+tools, MCP servers and session. See [child
 agents](./builtin-toolsets.md#child-agents) in the `shell` toolset.
 
 ## Project-scoped sessions
 
 Sessions started in agent mode are stored per project under
-`~/.iota/sessions/projects/<slug>/`, and `/session` and `--resume` list
-only the current project's sessions there (`--resume=<id>` with an id from
+`~/.iota/sessions/projects/<slug>/`, and `/session` and `iota resume` list
+only the current project's sessions there (`iota resume <id>` with an id from
 anywhere still works). Normal-mode sessions stay in the flat global store,
 whose list also shows every project's sessions labelled with their project —
 nothing is ever invisible.

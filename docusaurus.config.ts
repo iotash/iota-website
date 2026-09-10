@@ -102,7 +102,11 @@ const config: Config = {
   themeConfig: {
     image: 'img/og.png',
     metadata: [
-      {name: 'description', content: 'iota is a chat CLI written in Rust. One binary, one YAML file, any provider.'},
+      {
+        name: 'description',
+        content:
+          'iota is an agent CLI written in Rust. You configure agents — a model, a prompt, a set of tools — and run them: iota run <agent>.',
+      },
     ],
     colorMode: {
       defaultMode: 'light',

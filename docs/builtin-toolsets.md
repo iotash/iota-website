@@ -62,8 +62,8 @@ Safety model — the same one Claude Code and Codex CLI use:
   access is blocked** unless `network: true`.
 - **Sandboxed calls run without prompting.** Where no sandbox is available
   (Linux without bwrap) or with `sandbox: off`, every call instead
-  asks for confirmation in the chat (allow once / allow for this session /
-  deny), and non-interactive `-m` runs reject it — set `auto_run: true` to
+  asks for confirmation in the conversation (allow once / allow for this
+  session / deny), and non-interactive `-m` runs reject it — set `auto_run: true` to
   waive that.
 - Output is capped at 32 KB and 512 lines (head + tail kept, middle elided,
   bounded even while streaming). Each call is capped at **10 minutes** unless
@@ -108,8 +108,8 @@ job that must survive that has to detach itself (`nohup`, `setsid`).
 
 ### Child agents
 
-iota has no delegation tool: a child agent is `iota <agent> -m "<task>"` run
-from `bash`, which is why the set is the one that matters most. The child is a
+iota has no delegation tool: a child agent is `iota run <agent> -m "<task>"`
+run from `bash`, which is why the set is the one that matters most. The child is a
 full run of that `agents:` entry — its own model, tools, MCP servers and
 session. Start it with `background: true` and its answer comes back as the
 notice above. For it to write without a user to ask, set
@@ -132,8 +132,8 @@ Safety model:
 - A file must be **read before it can be modified**, and a file that changed
   on disk since it was read must be re-read first — the model can never
   blind-overwrite your edits.
-- Every modifying call asks for confirmation in the chat (allow once / allow
-  for this session / deny). Non-interactive `-m` runs reject modifications
+- Every modifying call asks for confirmation in the conversation (allow once /
+  allow for this session / deny). Non-interactive `-m` runs reject modifications
   outright. Set `auto_write: true` under `tools: code:` to skip confirmations
   and allow `-m` writes:
 

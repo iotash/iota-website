@@ -335,9 +335,10 @@ like a well-typeset README:
 1. A 56 px top bar: the wordmark, then `docs` `install` `source` as plain mono text links.
 2. The positioning sentence at 38 px, then one sentence of explanation. No eyebrow, no gradient.
 3. The install command in a copyable box, with the cargo one-liner under it as small mono.
-4. Four facts on one line: `v0.1.0 · 10.3 MiB · MIT · macOS and Linux`.
-5. A terminal transcript — the only picture on the page. It is a real agent-mode session: a bash
-   call, its result, an answer that names a function and shows the two-line fix.
+4. Four facts on one line: `v0.1.0 · 10.25 MiB · MIT · macOS and Linux`.
+5. A terminal transcript — the only picture on the page. It is a real agent-mode session
+   (`iota run coder`, an agent with `workspace: true`): a bash call, its result, an answer that
+   names a function and shows the two-line fix.
 6. `# why it is small` — the philosophy paragraph (section 7 below has the copy).
 7. `# what it is, and is not` — two honest lists, five items each.
 8. Three text links out: documentation, source, changelog. Each with a half-line of context.
@@ -375,7 +376,8 @@ the homepage was missing; the second round only touched their version strings.
 Copy is drawn from `/Users/joyqi/Work/iota/README.md` — the flags, toolsets, config shape and
 release notes are the real ones, not lorem. Version numbers across every frame are `v0.1.0`, which
 is what `Cargo.toml` says today; the changelog entries below it run `v0.0.9`, `v0.0.8`, `v0.0.7`.
-The binary size on the homepage, 10.3 MiB, is a measured `target/release/iota` on arm64.
+The binary size on the homepage, 10.25 MiB, is the stripped `target/release/iota` on arm64 as
+`scripts/size.sh` reports it (10748048 bytes; the iota repo's `target/size.md` is the source).
 
 ---
 
@@ -387,7 +389,8 @@ This is the shipping English copy. It is set on the page exactly as written here
 
 > **The smallest thing between your terminal and a model.**
 >
-> iota is a chat CLI written in Rust. One binary, one YAML file, any provider.
+> iota is an agent CLI written in Rust. You configure agents — a model, a prompt, a set of tools —
+> and run them: `iota run <agent>`.
 
 ### Install
 
@@ -397,7 +400,7 @@ This is the shipping English copy. It is set on the page exactly as written here
 
 ### Facts
 
-> `v0.1.0  ·  10.3 MiB  ·  MIT  ·  macOS and Linux`
+> `v0.1.0  ·  10.25 MiB  ·  MIT  ·  macOS and Linux`
 
 ### Terminal caption
 
@@ -407,28 +410,29 @@ This is the shipping English copy. It is set on the page exactly as written here
 
 > The terminal is already an interface: it has scrollback, a clipboard, pipes and a shell. We did
 > not want to rebuild any of that in a window, so iota adds the one thing the terminal is missing —
-> a model — and stops there. Nothing it does is hidden from you: a session is a directory holding
-> meta.json and messages.jsonl, one JSON record per line, appended as you talk, and /debug shows the
-> exact request and response bodies that went over the wire. The config is one YAML file with three
-> maps in it. There is no account, no daemon and no telemetry. And there is nothing to be locked
-> into — any endpoint that speaks OpenAI, Anthropic or Gemini works, including one you run yourself,
-> and a child agent is just `iota <agent> -m "<task>"` run from bash, like anything else.
+> a model that can use your tools — and stops there. Nothing it does is hidden from you: a session
+> is a directory holding meta.json and messages.jsonl, one JSON record per line, appended as you
+> talk, and /debug shows the exact request and response bodies that went over the wire. The config
+> is one YAML file with three maps in it. There is no account, no daemon and no telemetry. And there
+> is nothing to be locked into — any endpoint that speaks OpenAI, Anthropic or Gemini works,
+> including one you run yourself, and a child agent is just `iota run <agent> -m "<task>"` run from
+> bash, like anything else.
 
 ### `# what it is, and is not`
 
 > **it does**
+> - run an agent you named in the config — its model, its prompt, its tools
+> - call MCP tools, and run bash inside an OS sandbox
 > - stream a reply, and let you keep typing while it arrives
 > - render markdown, tables and math as ANSI, inline
-> - take images, PDFs and text files as attachments
-> - call MCP tools, and run bash inside an OS sandbox
 > - save every session as plain text you can resume, grep or delete
 >
 > **it does not**
+> - run before you configure an agent — iota config init writes the first one
 > - run a daemon or a server, or leave anything running after you quit
 > - ask you to sign in, or phone home
 > - write outside the project root unless you say so
 > - wrap the model in a framework you have to learn first
-> - try to be an IDE
 
 ### Links out
 
@@ -444,17 +448,25 @@ This is the shipping English copy. It is set on the page exactly as written here
 
 Lowercase product name. Sentence case, never title case. No exclamation marks, no "blazingly", no
 "supercharge", no "unlock", no rocket. Every claim names a file, a flag or a protocol, so it can be
-checked: `meta.json`, `messages.jsonl`, `/debug`, `--agent`, `~/.iota.yaml`. "We" appears once, in
+checked: `meta.json`, `messages.jsonl`, `/debug`, `iota run`, `~/.iota.yaml`. "We" appears once, in
 the sentence about not rebuilding the terminal, because that is the one place a decision is being
 explained rather than a fact stated.
 
-One claim worth re-checking before launch: the **10.3 MiB** binary size is measured on arm64 from
-`target/release/iota`, and an x86_64 build will differ. The line count is `src/` only — 71k lines,
+One claim worth re-checking before launch: the **10.25 MiB** binary size is the stripped arm64
+`target/release/iota` (10748048 bytes) as the iota repo's `scripts/size.sh` measures it — MiB to two
+decimals, the same unit that repo uses — and an x86_64 build will differ. The line count is `src/` only — 71k lines,
 rounded down to ~70k; the 32k lines under `tests/` are not counted in it.
 
 The "it does not" list says *leave anything running after you quit* rather than *run anything in the
 background*, because the `bash` toolset does run background jobs — they are killed when iota exits,
 which is the honest form of the claim.
+
+Both lists were re-cut when iota became agent-first (2026-09-11). "it does" now leads with the thing
+you actually run — a configured agent — and dropped *take images, PDFs and text files as
+attachments*, which is a chat nicety the docs still carry. "it does not" gained *run before you
+configure an agent*: the zero-config start was given up on purpose, `iota config init` is where it
+went, and a page that hid that would be selling the old product. It lost *try to be an IDE*, the
+least informative line of the ten.
 
 ---
 

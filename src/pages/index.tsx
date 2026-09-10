@@ -18,19 +18,19 @@ const INSTALL_COMMAND = 'cargo install --git https://github.com/joyqi/iota';
 const ALT_INSTALL_COMMAND = 'brew install joyqi/tap/iota';
 
 const DOES = [
+  'run an agent you named in the config — its model, its prompt, its tools',
+  'call MCP tools, and run bash inside an OS sandbox',
   'stream a reply, and let you keep typing while it arrives',
   'render markdown, tables and math as ANSI, inline',
-  'take images, PDFs and text files as attachments',
-  'call MCP tools, and run bash inside an OS sandbox',
   'save every session as plain text you can resume, grep or delete',
 ];
 
 const DOES_NOT = [
+  'run before you configure an agent — iota config init writes the first one',
   'run a daemon or a server, or leave anything running after you quit',
   'ask you to sign in, or phone home',
   'write outside the project root unless you say so',
   'wrap the model in a framework you have to learn first',
-  'try to be an IDE',
 ];
 
 const LINKS: {to: string; label: string; note: string}[] = [
@@ -85,7 +85,7 @@ function Terminal() {
       </div>
       <div className={styles.termBody}>
         <div className={styles.termLine}>
-          <span className={styles.dim}>$ </span>iota --agent
+          <span className={styles.dim}>$ </span>iota run coder
         </div>
         <div className={styles.termLine}>
           <span className={styles.green}>✓ </span>
@@ -137,7 +137,7 @@ export default function Home(): React.ReactElement {
     <LayoutProvider>
       <PageMetadata
         title="iota — the smallest thing between your terminal and a model"
-        description="iota is a chat CLI written in Rust. One binary, one YAML file, any provider."
+        description="iota is an agent CLI written in Rust. You configure agents — a model, a prompt, a set of tools — and run them: iota run <agent>."
       />
       <div className={styles.page}>
         <header className={styles.topbar}>
@@ -156,7 +156,8 @@ export default function Home(): React.ReactElement {
             The smallest thing between your terminal and a model.
           </h1>
           <p className={styles.lead}>
-            iota is a chat CLI written in Rust. One binary, one YAML file, any provider.
+            iota is an agent CLI written in Rust. You configure agents — a model, a prompt, a set
+            of tools — and run them: iota run &lt;agent&gt;.
           </p>
 
           <InstallBox />
@@ -164,7 +165,7 @@ export default function Home(): React.ReactElement {
             <span>or</span>
             <code>{ALT_INSTALL_COMMAND}</code>
           </p>
-          <p className={styles.facts}>v0.1.0&nbsp; · &nbsp;10.3 MiB&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS and Linux</p>
+          <p className={styles.facts}>v0.1.0&nbsp; · &nbsp;10.25 MiB&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS and Linux</p>
 
           <Terminal />
           <p className={styles.caption}>
@@ -175,14 +176,14 @@ export default function Home(): React.ReactElement {
           <p className={styles.philosophy}>
             The terminal is already an interface: it has scrollback, a clipboard, pipes and a
             shell. We did not want to rebuild any of that in a window, so iota adds the one thing
-            the terminal is missing — a model — and stops there. Nothing it does is hidden from
-            you: a session is a directory holding meta.json and messages.jsonl, one JSON record per
-            line, appended as you talk, and /debug shows the exact request and response bodies that
-            went over the wire. The config is one YAML file with three maps in it. There is no
-            account, no daemon and no telemetry. And there is nothing to be locked into — any
-            endpoint that speaks OpenAI, Anthropic or Gemini works, including one you run yourself,
-            and a child agent is just iota &lt;agent&gt; -m &quot;&lt;task&gt;&quot; run from bash,
-            like anything else.
+            the terminal is missing — a model that can use your tools — and stops there. Nothing it
+            does is hidden from you: a session is a directory holding meta.json and messages.jsonl,
+            one JSON record per line, appended as you talk, and /debug shows the exact request and
+            response bodies that went over the wire. The config is one YAML file with three maps in
+            it. There is no account, no daemon and no telemetry. And there is nothing to be locked
+            into — any endpoint that speaks OpenAI, Anthropic or Gemini works, including one you run
+            yourself, and a child agent is just iota run &lt;agent&gt; -m &quot;&lt;task&gt;&quot;
+            run from bash, like anything else.
           </p>
 
           <h2 className={styles.sectionMarkTight}># what it is, and is not</h2>

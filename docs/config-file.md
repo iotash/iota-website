@@ -1,7 +1,7 @@
 ---
 id: config-file
 title: The config file
-description: providers, models and agents — the three layers of ~/.iota.yaml, and how a name is resolved against them.
+description: providers, models and agents — the three layers of ~/.iota.yaml, how an agent reaches a model, and what the loader refuses.
 sidebar_label: The config file
 ---
 
@@ -19,7 +19,9 @@ Same-name entries in later files override earlier ones, whole entry at a time.
 
 ## Priority
 
-For individual values: **CLI flag > env var > config file**.
+The API key is **env var > `providers.<name>.key`** — never a flag, so it stays
+out of the shell history and out of `ps`. The two per-run flags that overlap the
+config (`-M`, `-s`) win over it for that one invocation.
 
 ## The three layers
 
@@ -31,19 +33,19 @@ The config has three top-level maps, each answering one question:
 | `models:` | *which model, and what does its protocol look like?* | `provider`, `id`, `context_window`, `defer_mode`, image knobs, `effort`/`temperature`/`top_p` defaults |
 | `agents:` | *how do I use it?* | `models`, `system`/`system_file`, `tools`, `mcp_servers`, `workspace`, `no_save`, `notify`, `description`, and overrides for the three tunables |
 
-The positional argument is resolved against all three, in that order, then
-against the built-in provider types — so `iota reviewer`, `iota sonnet`,
-`iota deepseek` and `iota openai -M gpt-4o` all work, and a name defined in
-two layers is taken from the higher one.
+**A run names an agent.** `iota run <name>` resolves `agents:` and nothing
+else: the agent decides which model it drives, and the model decides which
+endpoint it talks to. A `models:` or `providers:` entry is reached through an
+agent, never named directly — one name meant four things once, and a collision
+silently changed what ran.
 
 :::tip
 
-**`agents.default` is what a bare `iota` runs.** With no positional argument
-iota falls back to the agent called `default`; a positional argument always
-wins over it, and without such an agent the invocation still asks for one.
-Only an `agents.default` you wrote counts — an entry the migration layer
-synthesised from an old one-layer `providers.default` block does not, and
-neither does a `models.default` or a `providers.default`.
+**`agents.default` is what a bare `iota` runs.** With no name iota takes the
+agent called `default`; a name always wins over it, and without such an agent
+the invocation asks for one. A `models.default` or a `providers.default` says
+which model or endpoint it is, never how to drive one, so neither is an entry
+point.
 
 :::
 
@@ -83,10 +85,10 @@ models:                      # configured models: provider + id + protocol + def
   gpt5:
     provider: openai
     id: gpt-5.2
-    context_window: 400k     # context window for compaction accounting (--context-window overrides)
+    context_window: 400k     # context window for compaction accounting (/model's Context tab overrides)
     defer_mode: system-tools # protocol for deferred MCP tools: normal|reference|tool-search|system-tools
     effort: high             # default reasoning effort: low|medium|high|xhigh|max
-    temperature: 0.7         # default sampling temperature, 0.0-2.0 (-t and /model override)
+    temperature: 0.7         # default sampling temperature, 0.0-2.0 (/model overrides)
     top_p: 0.9               # nucleus sampling, 0.0-1.0 (advanced: tune this OR temperature, not both;
                              # reasoning models reject/ignore it — omit to use the provider default)
   chat: deepseek:deepseek-chat
@@ -99,7 +101,7 @@ agents:                      # usage: how a model is driven
       code:
       shell:
     mcp_servers: [github]    # load only these MCP servers; [] = none; key absent = all
-    workspace: true          # project overlay + skills (what --agent switches on)
+    workspace: true          # project overlay (AGENTS.md) + skills + project-scoped sessions
 
   reviewer:
     models: [sonnet]
@@ -109,7 +111,7 @@ agents:                      # usage: how a model is driven
 
   scratch:
     models: ["openai:*"]     # a wildcard first entry starts in the model picker
-    no_save: true            # start ephemeral (like --no-save); an explicit --resume outranks it
+    no_save: true            # start ephemeral (like --no-save); an explicit `iota resume` outranks it
     notify: false            # no desktop notification while the terminal is unfocused (default: on)
 ```
 
@@ -118,44 +120,62 @@ With this config:
 ```bash
 # The agent named "default": its first model (gpt5 → openai/gpt-5.2), prompt, tools and MCP subset
 iota                              # …and with no argument at all, that is what runs
-iota default -m "hello"
+iota run default -m "hello"
 
-# A model entry on its own — no agent, so no tools and no system prompt
-iota sonnet -m "hello"
+# Another agent: its own models, prompt, tools and MCP subset
+iota run reviewer -m "what is wrong with this diff?"
 
-# A provider on its own: -M picks the model, config key used, no need for -k
-iota openai -m "hi" -M gpt-4o
+# -M picks another model from the candidate set (a warning if it is outside it — the set is advice)
+iota run default -M sonnet -m "hi"
 
 # -M also takes provider:id, which moves the run to that endpoint
-iota default -M "deepseek:deepseek-reasoner" -m "hi"
+iota run default -M "deepseek:deepseek-reasoner" -m "hi"
 
-# CLI flags override the config
-iota openai -k sk-override -m "hi" -M gpt-4o
+# …and provider:* starts in the model picker
+iota run default -M "deepseek:*"
 ```
 
 `-M` accepts a candidate's name, a bare model id, or `provider:id`. A model
 outside the agent's `models:` list is a warning, not a refusal — the list is
 advice about what works well here, not a whitelist.
 
-## Migrating from the one-layer config
+## One layer per key
 
-Earlier versions kept everything under `providers.<name>`. That still works:
-iota splits such a block into the three entries it means and prints one line
-saying what moved.
+Every key belongs to exactly one layer, and writing it in another is an error
+naming the layer that owns it. The whole document is audited **before** it is
+decoded, and five things are fatal:
+
+| What | Example | What you get |
+|------|---------|--------------|
+| A key of another layer | `providers.p.model` | ``config ~/.iota.yaml: providers.p.model: `model` is now a `models:` entry`` |
+| A retired key | `agents.a.tools.delegate` | the toolset was removed — run child agents from bash instead |
+| An unknown key | `agents.a.sytem` | the coordinate and the file it is in |
+| An unknown top-level key | `agent:` | the same |
+| An unknown toolset | `tools: {web: {}}` | the same |
+
+There is no migration layer and no compatibility shim: a key that silently does
+nothing is exactly the failure this audit exists to close. (A YAML *syntax*
+error still drops the file with a warning, because the parser is the only thing
+that knows what went wrong.)
+
+Two keys changed name when the layers split: a provider's `agent: true` is an
+agent's `workspace: true`, and the `agent` toolset is now called `skills`. The
+`delegate` toolset was removed outright — a child agent is a bash subprocess
+now (see the [`shell` set](./builtin-toolsets.md#child-agents)).
 
 ```yaml
-# before — one layer
+# what a single-layer config used to look like — every key of it is refused today
 providers:
   deepseek:
-    type: openai
-    key: ${env:DEEPSEEK_KEY}
-    url: https://api.deepseek.com/v1
-    model: deepseek-chat
-    system: "You are terse"
-    tools: {code: {}}
-    agent: true
+    type: openai                      # ✓ the endpoint
+    key: ${env:DEEPSEEK_KEY}          # ✓
+    url: https://api.deepseek.com/v1  # ✓
+    model: deepseek-chat              # ✗ → a `models:` entry
+    system: "You are terse"           # ✗ → `agents.<name>.system`
+    tools: {code: {}}                 # ✗ → `agents.<name>.tools`
+    agent: true                       # ✗ → `agents.<name>.workspace`
 
-# after — three layers
+# the same thing, in three layers
 providers:
   deepseek: {type: openai, key: "${env:DEEPSEEK_KEY}", url: https://api.deepseek.com/v1}
 models:
@@ -168,13 +188,8 @@ agents:
     workspace: true
 ```
 
-Two keys were renamed on the way: a provider's `agent: true` is an agent's
-`workspace: true`, and the `agent` toolset is now called `skills`. Both old
-spellings are accepted with a warning. The `delegate` toolset was retired: a
-`tools: {delegate: …}` key is dropped with a warning instead of failing (a
-child agent is now a bash subprocess — see the [`shell`
-set](./builtin-toolsets.md#shell--bash)). The compatibility layer will be
-removed after 1.0.
+`iota config check` loads the files and reports the three layers, warning when
+no `agents.default` exists; `iota config path` prints which files a run reads.
 
 ## Variable expansion
 
