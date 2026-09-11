@@ -14,7 +14,7 @@ import styles from './index.module.css';
 // Homebrew is the install command the design puts first, but the
 // joyqi/tap/iota formula is not published yet — so cargo leads for now.
 // Swap the two back once the tap ships.
-const INSTALL_COMMAND = 'cargo install --git https://github.com/joyqi/iota';
+const INSTALL_COMMAND = 'cargo install --git https://github.com/iotash/iota';
 const ALT_INSTALL_COMMAND = 'brew install joyqi/tap/iota';
 
 const DOES = [
@@ -40,7 +40,7 @@ const LINKS: {to: string; label: string; note: string}[] = [
     note: 'install, configure, and the three layers of ~/.iota.yaml',
   },
   {
-    to: 'https://github.com/joyqi/iota',
+    to: 'https://github.com/iotash/iota',
     label: 'Source on GitHub',
     note: 'MIT, ~70k lines of Rust, issues welcome',
   },
@@ -147,7 +147,7 @@ export default function Home(): React.ReactElement {
           <nav className={styles.topbarLinks}>
             <Link to="/docs">docs</Link>
             <Link to="/docs/install">install</Link>
-            <Link to="https://github.com/joyqi/iota">source</Link>
+            <Link to="https://github.com/iotash/iota">source</Link>
           </nav>
         </header>
 

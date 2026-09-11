@@ -396,7 +396,7 @@ This is the shipping English copy. It is set on the page exactly as written here
 
 > `$ brew install joyqi/tap/iota`
 >
-> or `cargo install --git https://github.com/joyqi/iota`
+> or `cargo install --git https://github.com/iotash/iota`
 
 ### Facts
 

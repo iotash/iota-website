@@ -1,6 +1,6 @@
 # iota-website
 
-The website for [iota](https://github.com/joyqi/iota) — `iota.sh`. Built with
+The website for [iota](https://github.com/iotash/iota) — `iota.sh`. Built with
 Docusaurus 3 and TypeScript.
 
 ```bash

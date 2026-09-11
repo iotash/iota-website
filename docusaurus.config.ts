@@ -21,6 +21,9 @@ const config: Config = {
   baseUrl: '/',
   trailingSlash: false,
 
+  organizationName: 'iotash',
+  projectName: 'iota-website',
+
   onBrokenLinks: 'throw',
   onBrokenAnchors: 'throw',
 
@@ -126,7 +129,7 @@ const config: Config = {
         {to: '/docs', label: 'Docs', position: 'left'},
         {to: '/changelog', label: 'Changelog', position: 'left'},
         {
-          href: 'https://github.com/joyqi/iota',
+          href: 'https://github.com/iotash/iota',
           position: 'right',
           className: 'navbar__item--github',
           'aria-label': 'Source on GitHub',
