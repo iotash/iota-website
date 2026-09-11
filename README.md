@@ -33,5 +33,6 @@ plus Inter Tight 700; regenerate it if the positioning sentence changes.
 
 ## Deployment
 
-`.github/workflows/deploy.yml` builds on every push to `main` and publishes to
-GitHub Pages. `static/CNAME` points the site at `iota.sh`.
+Cloudflare Pages builds every push to `main` through its Git integration —
+`pnpm build`, output directory `build`, `NODE_VERSION=24` — and serves it at
+`iota.sh`. There is no deploy workflow in this repository.
