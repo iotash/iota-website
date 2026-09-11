@@ -1,20 +1,31 @@
 ---
 id: install
 title: Installation
-description: Homebrew, cargo, or a build from source. macOS and Linux.
+description: Homebrew, a curl one-liner, cargo, or a build from source. macOS and Linux.
 sidebar_label: Installation
 ---
 
 # Installation
 
-iota is a single binary. Pick whichever of the three routes below you already
-have a package manager for.
+iota is a single binary. Pick whichever of the routes below you already have a
+package manager for — the first two download a prebuilt binary, the last two
+build it.
 
 ## Homebrew
 
 ```bash
-brew install joyqi/tap/iota
+brew install iotash/tap/iota
 ```
+
+## Shell
+
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/iotash/iota/releases/latest/download/iota-installer.sh | sh
+```
+
+Fetches the prebuilt binary for your platform from the latest release, verifies
+its checksum and puts it in `~/.cargo/bin` (or `$CARGO_HOME/bin`), adding that
+directory to your `PATH` if it is not there already. No Rust toolchain needed.
 
 ## Cargo
 
@@ -38,7 +49,14 @@ another toolchain needs Rust 1.98 or newer.
 
 ## Platforms
 
-macOS and Linux.
+macOS and Linux, Apple Silicon and x86-64 alike: every release carries
+`aarch64-apple-darwin`, `x86_64-apple-darwin`, `aarch64-unknown-linux-gnu` and
+`x86_64-unknown-linux-gnu` binaries.
+
+Windows is not supported, and not as an oversight we mean to fix: iota reaches
+for Unix signals, process groups and file modes on nearly every path — job
+control in `bash`, the session files, the sandbox — so the crate does not
+compile for a `*-pc-windows-*` target at all. WSL works, as ordinary Linux.
 
 ## First run
 

@@ -11,11 +11,10 @@ import styles from './index.module.css';
 // footer (design/DESIGN.md §6, §8.5). LayoutProvider still gives it colour
 // mode, so the page follows the system theme.
 
-// Homebrew is the install command the design puts first, but the
-// joyqi/tap/iota formula is not published yet — so cargo leads for now.
-// Swap the two back once the tap ships.
-const INSTALL_COMMAND = 'cargo install --git https://github.com/iotash/iota';
-const ALT_INSTALL_COMMAND = 'brew install joyqi/tap/iota';
+// Homebrew leads, as the design puts it (design/DESIGN.md §7): the tap is
+// iotash/homebrew-tap and a release writes Formula/iota.rb into it.
+const INSTALL_COMMAND = 'brew install iotash/tap/iota';
+const ALT_INSTALL_COMMAND = 'cargo install --git https://github.com/iotash/iota';
 
 const DOES = [
   'run an agent you named in the config — its model, its prompt, its tools',
