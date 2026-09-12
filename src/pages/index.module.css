@@ -133,6 +133,18 @@
   color: var(--iota-text-3);
 }
 
+/* The one link in the facts strip. It reads as part of the line — same dim
+   colour, underlined only so it is discoverable as a link at all. */
+.factLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.factLink:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: underline;
+}
+
 /* 5 — the terminal transcript, the only picture on the page. It keeps the
    dark palette in both themes (§2). */
 .terminal {

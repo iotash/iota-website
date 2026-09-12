@@ -335,7 +335,8 @@ like a well-typeset README:
 1. A 56 px top bar: the wordmark, then `docs` `install` `source` as plain mono text links.
 2. The positioning sentence at 38 px, then one sentence of explanation. No eyebrow, no gradient.
 3. The install command in a copyable box, with the cargo one-liner under it as small mono.
-4. Four facts on one line: `v0.1.0 · 10.25 MiB · MIT · macOS and Linux`.
+4. Four facts on one line: `v0.1.0 · 7.56 MiB · MIT · macOS, Linux and Windows`, where
+   `Windows` links to the install page.
 5. A terminal transcript — the only picture on the page. It is a real agent-mode session
    (`iota run coder`, an agent with `workspace: true`): a bash call, its result, an answer that
    names a function and shows the two-line fix.
@@ -376,8 +377,9 @@ the homepage was missing; the second round only touched their version strings.
 Copy is drawn from `/Users/joyqi/Work/iota/README.md` — the flags, toolsets, config shape and
 release notes are the real ones, not lorem. Version numbers across every frame are `v0.1.0`, which
 is what `Cargo.toml` says today; the changelog entries below it run `v0.0.9`, `v0.0.8`, `v0.0.7`.
-The binary size on the homepage, 10.25 MiB, is the stripped `target/release/iota` on arm64 as
-`scripts/size.sh` reports it (10748048 bytes; the iota repo's `target/size.md` is the source).
+The binary size on the homepage, 7.56 MiB, is the stripped `target/release/iota` on arm64 as
+`scripts/size.sh` reports it (7924480 bytes; the iota repo's `target/size.md` is the source). It
+was 10.25 MiB until the o200k ranks started shipping zstd-compressed.
 
 ---
 
@@ -400,7 +402,14 @@ This is the shipping English copy. It is set on the page exactly as written here
 
 ### Facts
 
-> `v0.1.0  ·  10.25 MiB  ·  MIT  ·  macOS and Linux`
+> `v0.1.0  ·  7.56 MiB  ·  MIT  ·  macOS, Linux and `[`Windows`](/docs/install)
+
+The platform fact is the only place the homepage names Windows, and `Windows` is
+a link to the install page. The install box stays at two commands: a third one
+(the PowerShell `irm … | iex` line) would turn the page's single strongest
+element into a menu, and the audience that needs it is the audience that will
+click. The Windows binary is unsigned — that is a caveat the docs page carries,
+not the homepage.
 
 ### Terminal caption
 
@@ -452,8 +461,8 @@ checked: `meta.json`, `messages.jsonl`, `/debug`, `iota run`, `~/.iota.yaml`. "W
 the sentence about not rebuilding the terminal, because that is the one place a decision is being
 explained rather than a fact stated.
 
-One claim worth re-checking before launch: the **10.25 MiB** binary size is the stripped arm64
-`target/release/iota` (10748048 bytes) as the iota repo's `scripts/size.sh` measures it — MiB to two
+One claim worth re-checking before launch: the **7.56 MiB** binary size is the stripped arm64
+`target/release/iota` (7924480 bytes) as the iota repo's `scripts/size.sh` measures it — MiB to two
 decimals, the same unit that repo uses — and an x86_64 build will differ. The line count is `src/` only — 71k lines,
 rounded down to ~70k; the 32k lines under `tests/` are not counted in it.
 

@@ -1,14 +1,14 @@
 ---
 id: install
 title: Installation
-description: Homebrew, a curl one-liner, cargo, or a build from source. macOS and Linux.
+description: Homebrew, a curl one-liner, a PowerShell one-liner, cargo, or a build from source. macOS, Linux and Windows.
 sidebar_label: Installation
 ---
 
 # Installation
 
 iota is a single binary. Pick whichever of the routes below you already have a
-package manager for — the first two download a prebuilt binary, the last two
+package manager for — the first three download a prebuilt binary, the last two
 build it.
 
 ## Homebrew
@@ -26,6 +26,40 @@ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/iotash/iota/releases/la
 Fetches the prebuilt binary for your platform from the latest release, verifies
 its checksum and puts it in `~/.cargo/bin` (or `$CARGO_HOME/bin`), adding that
 directory to your `PATH` if it is not there already. No Rust toolchain needed.
+
+## PowerShell (Windows)
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/iotash/iota/releases/latest/download/iota-installer.ps1 | iex"
+```
+
+The same thing for Windows: it fetches `iota-x86_64-pc-windows-msvc.zip`, checks
+its SHA-256 and puts `iota.exe` in `%USERPROFILE%\.cargo\bin` (or
+`%CARGO_HOME%\bin`), adding that directory to your `PATH` if it is not there
+already. No Rust toolchain needed.
+
+:::warning
+
+**The Windows binaries are not code-signed.** Authenticode signing needs a
+certificate bought from a signing service, and iota does not have one — so
+`iota.exe` ships unsigned. Your browser may flag the download, and SmartScreen
+may warn the first time you run it. What you *can* check is that the file is the
+one the release published: every asset comes with a `.sha256` beside it, and the
+release also carries a combined `sha256.sum`.
+
+```powershell
+Get-FileHash .\iota-x86_64-pc-windows-msvc.zip -Algorithm SHA256
+```
+
+Compare that against the published `iota-x86_64-pc-windows-msvc.zip.sha256`. The
+PowerShell installer above already does this check for you — the warning is
+about provenance, not integrity.
+
+The macOS binaries are signed (ad-hoc, by the linker) and a release is blocked
+if that signature does not verify. Linux binaries carry no signature either;
+ELF has nowhere to put one.
+
+:::
 
 ## Cargo
 
@@ -50,9 +84,10 @@ another toolchain needs Rust 1.98 or newer.
 ## Platforms
 
 macOS, Linux and Windows, Apple Silicon and x86-64 alike. Every release carries
-`aarch64-apple-darwin`, `x86_64-apple-darwin`, `aarch64-unknown-linux-gnu` and
-`x86_64-unknown-linux-gnu` binaries; Windows builds and is tested in CI but has
-no release binary yet, so there it means building from source for now.
+`aarch64-apple-darwin`, `x86_64-apple-darwin`, `aarch64-unknown-linux-gnu`,
+`x86_64-unknown-linux-gnu` and `x86_64-pc-windows-msvc` binaries. ARM Windows
+(`aarch64-pc-windows-msvc`) is not a release target and nothing tests it, so
+there it means building from source.
 
 Two things differ on Windows, both about the `shell` toolset:
 

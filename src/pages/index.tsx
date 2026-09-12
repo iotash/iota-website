@@ -164,7 +164,15 @@ export default function Home(): React.ReactElement {
             <span>or</span>
             <code>{ALT_INSTALL_COMMAND}</code>
           </p>
-          <p className={styles.facts}>v0.1.0&nbsp; · &nbsp;10.25 MiB&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS and Linux</p>
+          {/* The platform fact is the one place the homepage mentions Windows: the
+              install box stays two commands (design/DESIGN.md §7), and the third
+              one — the PowerShell line — lives in the docs behind this link. */}
+          <p className={styles.facts}>
+            v0.1.0&nbsp; · &nbsp;7.56 MiB&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
+            <Link className={styles.factLink} to="/docs/install">
+              Windows
+            </Link>
+          </p>
 
           <Terminal />
           <p className={styles.caption}>
