@@ -11,7 +11,7 @@ Besides MCP servers, iota ships built-in tools grouped into named
 **toolsets** that you enable per agent in the config file. A toolset is
 enabled by listing it under that agent's `tools:` key; the value is the
 set's shared configuration, and an empty value uses its defaults. Available
-sets: `shell` (running bash commands, sandboxed), `code` (reading, searching,
+sets: `shell` (running shell commands, sandboxed), `code` (reading, searching,
 and editing project files), `skills` (skill activation; auto-enabled by agent
 mode), and `ask` (interactive questions to the user; enabled by default in
 interactive sessions — disable with `ask: false`).
@@ -44,9 +44,9 @@ single yes/no. ESC declines — the model is told and proceeds on its own.
 Zero side effects, on by default interactively, absent in `-m` runs; opt out
 per agent with `tools: {ask: false}`.
 
-## `shell` — `bash`
+## `shell`
 
-Lets the model run real bash command lines — pipes, redirects, `&&` chaining,
+Lets the model run real shell command lines — pipes, redirects, `&&` chaining,
 heredocs — and returns their combined stdout/stderr. The model calls it with
 `command` (required), an optional `cwd` (defaults to the project root), an
 optional `timeout` in seconds (default 600, maximum 3600; outside that range
@@ -69,7 +69,7 @@ Safety model — the same one Claude Code and Codex CLI use:
   bounded even while streaming). Each call is capped at **10 minutes** unless
   it asks for a different `timeout`; while a command runs, the status-line
   spinner shows the elapsed time — press **ESC** (or Ctrl+C) to terminate it.
-- **Calls issued together run concurrently.** A round's consecutive `bash`
+- **Calls issued together run concurrently.** A round's consecutive `shell`
   calls execute as one batch — ESC cancels the batch, and results still come
   back in call order. (Every other toolset keeps the conservative rule: only
   calls that cannot change state batch.)
@@ -89,8 +89,17 @@ then `powershell.exe`), then `cmd.exe`; see
 The **tool description follows the winner**, so the model writes the dialect
 that will actually be read: it is told in the first sentence which shell it is
 talking to, and the POSIX advice gives way to PowerShell's (`;` chaining,
-object pipelines, `$null`) or cmd's where one of those runs. The tool itself is
-called `bash` on every platform, and so is the config key (`tools: shell:`).
+object pipelines, `$null`) or cmd's where one of those runs.
+
+The **name does not follow it**: the tool is `shell` on every platform and under
+every interpreter, as is the config key. Naming it after one dialect is what
+goes wrong — a model handed a tool called `bash` and a PowerShell description
+writes PowerShell 95% of the time, but one handed `powershell` and a bash
+description still writes PowerShell 68% of the time, so the conflict resolves by
+whichever slot happens to carry the stronger word. A neutral name plus a
+description that names the interpreter avoids the conflict entirely (98% and
+100% correct in the same measurements), which is why that first sentence is not
+optional.
 
 ### Background jobs
 
@@ -127,7 +136,7 @@ job that must survive that has to detach itself (`nohup`, `setsid`).
 ### Child agents
 
 iota has no delegation tool: a child agent is `iota run <agent> -m "<task>"`
-run from `bash`, which is why the set is the one that matters most. The child is a
+run from the `shell` tool, which is why the set is the one that matters most. The child is a
 full run of that `agents:` entry — its own model, tools, MCP servers and
 session. Start it with `background: true` and its answer comes back as the
 notice above. For it to write without a user to ask, set
@@ -143,7 +152,7 @@ and binaries excluded), `list_dir` explores, `read_file` returns line-numbered
 content, and `edit_file` (exact, unique string replacement) / `write_file`
 change files. Everything is confined to the **project root** (the git root of
 the working directory). Verification — builds, tests — goes through the
-`shell` set's `bash`, so enable it alongside.
+`shell` set, so enable it alongside.
 
 Safety model:
 

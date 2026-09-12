@@ -46,7 +46,7 @@ higher wins):
 Discovered skills are advertised to the model as a name + description catalog
 inside the overlay; the model activates one by calling `load_skill` with the
 skill's name, reads files the skill references through the same tool's `file`
-argument, and runs bundled scripts through `bash` (enable the `shell`
+argument, and runs bundled scripts through the `shell` tool (enable the `shell`
 toolset for the agent if your skills need scripts). Invalid skills are
 skipped with a warning, never fatal. You can also run a skill yourself with
 `/skills <name> [instructions]` — the skill's instructions become the message
@@ -65,7 +65,7 @@ other, agent mode or not.
 ## Child agents
 
 iota has no delegation tool: a child agent is `iota run <agent> -m "<task>"`
-run from `bash`. It is a full run of that `agents:` entry — its own model,
+run from the `shell` tool. It is a full run of that `agents:` entry — its own model,
 tools, MCP servers and session. See [child
 agents](./builtin-toolsets.md#child-agents) in the `shell` toolset.
 

@@ -35,7 +35,7 @@ Attached files are sent with your next message, then cleared automatically.
 | Key | What it does |
 |-----|--------------|
 | **Tab** | Cycle through the slash-command completions in the suggestion row. |
-| **Esc** | Cancel the innermost running scope — a streaming reply, or a running `bash` call. |
+| **Esc** | Cancel the innermost running scope — a streaming reply, or a running `shell` call. |
 | **Ctrl+C** | Cancel the turn. |
 | **Enter** | Send. You can keep typing while a reply streams; queued submits are sent in order. |
 

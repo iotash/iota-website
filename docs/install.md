@@ -60,7 +60,7 @@ Two things differ on Windows, both about the `shell` toolset:
   of these wins: `IOTA_SHELL`; **Git Bash** (`IOTA_GIT_BASH_PATH`, else the
   `bin\bash.exe` of the Git installation that owns the `git.exe` on your
   `PATH`, else the default install locations); **PowerShell** (`pwsh.exe`, then
-  `powershell.exe`); and finally **`cmd.exe`**. The `bash` tool's description
+  `powershell.exe`); and finally **`cmd.exe`**. The `shell` tool's description
   names the winner in its first sentence and teaches that shell's dialect, so a
   machine with Git for Windows behaves like Unix and one without it gets
   PowerShell instructions instead of POSIX ones.
