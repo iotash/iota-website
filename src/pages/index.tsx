@@ -18,7 +18,7 @@ const ALT_INSTALL_COMMAND = 'cargo install --git https://github.com/iotash/iota'
 
 const DOES = [
   'run an agent you named in the config — its model, its prompt, its tools',
-  'call MCP tools, and run bash inside an OS sandbox',
+  'call MCP tools, and run bash inside an OS sandbox (macOS and Linux)',
   'stream a reply, and let you keep typing while it arrives',
   'render markdown, tables and math as ANSI, inline',
   'save every session as plain text you can resume, grep or delete',

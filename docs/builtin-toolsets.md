@@ -74,6 +74,24 @@ Safety model — the same one Claude Code and Codex CLI use:
   back in call order. (Every other toolset keeps the conservative rule: only
   calls that cannot change state batch.)
 
+### Which shell runs it
+
+`bash -c` on macOS and Linux, always. On Windows iota embeds no interpreter and
+takes the first one the machine has — Git Bash, then PowerShell (`pwsh.exe`,
+then `powershell.exe`), then `cmd.exe`; see
+[Platforms](/docs/install#platforms). Two environment variables decide it:
+
+| Variable | What it does |
+|---|---|
+| `IOTA_SHELL` | The interpreter for every shell call: an absolute path, or a name on `PATH`. Honoured on **every** platform, so `IOTA_SHELL=zsh` works on a Mac too. The arguments follow the name — `-c` for the POSIX family, `-NoLogo -NoProfile -NonInteractive -Command` for `pwsh`/`powershell`, `/C` for `cmd`. Naming something unrunnable fails the call rather than falling back |
+| `IOTA_GIT_BASH_PATH` | Windows only: where Git Bash's `bash.exe` is, when it is not where the `git.exe` on your `PATH` implies |
+
+The **tool description follows the winner**, so the model writes the dialect
+that will actually be read: it is told in the first sentence which shell it is
+talking to, and the POSIX advice gives way to PowerShell's (`;` chaining,
+object pipelines, `$null`) or cmd's where one of those runs. The tool itself is
+called `bash` on every platform, and so is the config key (`tools: shell:`).
+
 ### Background jobs
 
 `"background": true` starts the command and returns at once with a job id,

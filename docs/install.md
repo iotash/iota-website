@@ -49,14 +49,29 @@ another toolchain needs Rust 1.98 or newer.
 
 ## Platforms
 
-macOS and Linux, Apple Silicon and x86-64 alike: every release carries
+macOS, Linux and Windows, Apple Silicon and x86-64 alike. Every release carries
 `aarch64-apple-darwin`, `x86_64-apple-darwin`, `aarch64-unknown-linux-gnu` and
-`x86_64-unknown-linux-gnu` binaries.
+`x86_64-unknown-linux-gnu` binaries; Windows builds and is tested in CI but has
+no release binary yet, so there it means building from source for now.
 
-Windows is not supported, and not as an oversight we mean to fix: iota reaches
-for Unix signals, process groups and file modes on nearly every path — job
-control in `bash`, the session files, the sandbox — so the crate does not
-compile for a `*-pc-windows-*` target at all. WSL works, as ordinary Linux.
+Two things differ on Windows, both about the `shell` toolset:
+
+- **It runs the shell the machine has** — iota embeds no interpreter. The first
+  of these wins: `IOTA_SHELL`; **Git Bash** (`IOTA_GIT_BASH_PATH`, else the
+  `bin\bash.exe` of the Git installation that owns the `git.exe` on your
+  `PATH`, else the default install locations); **PowerShell** (`pwsh.exe`, then
+  `powershell.exe`); and finally **`cmd.exe`**. The `bash` tool's description
+  names the winner in its first sentence and teaches that shell's dialect, so a
+  machine with Git for Windows behaves like Unix and one without it gets
+  PowerShell instructions instead of POSIX ones.
+- **There is no OS sandbox.** Seatbelt and bubblewrap have no Windows
+  equivalent iota is willing to ship, so commands run with your full
+  permissions and every call asks for confirmation unless `auto_run: true`
+  waives it.
+
+Everything else is the same everywhere: reading, writing and editing files,
+skills, MCP servers, the whole TUI. WSL remains a fine way to get the Unix
+behaviour exactly.
 
 ## First run
 
