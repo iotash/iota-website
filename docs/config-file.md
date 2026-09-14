@@ -31,7 +31,7 @@ The config has three top-level maps, each answering one question:
 |-----|---------|------|
 | `providers:` | *how do I reach the API?* | `type`, `key`, `url` |
 | `models:` | *which model, and what does its protocol look like?* | `provider`, `id`, `context_window`, `defer_mode`, image knobs, `effort`/`temperature`/`top_p` defaults |
-| `agents:` | *how do I use it?* | `models`, `system`/`system_file`, `tools`, `mcp_servers`, `workspace`, `no_save`, `notify`, `description`, and overrides for the three tunables |
+| `agents:` | *how do I use it?* | `models`, `system`/`system_file`, `tools`, `mcp_servers`, `workspace`, `no_save`, `notify`, `description`, and overrides for `context_window`/`effort`/`temperature`/`top_p` |
 
 **A run names an agent.** `iota run <name>` resolves `agents:` and nothing
 else: the agent decides which model it drives, and the model decides which
@@ -85,7 +85,7 @@ models:                      # configured models: provider + id + protocol + def
   gpt5:
     provider: openai
     id: gpt-5.2
-    context_window: 400k     # context window for compaction accounting (/model's Context tab overrides)
+    context_window: 400k     # context window for compaction accounting (an agent may override it)
     defer_mode: system-tools # protocol for deferred MCP tools: normal|reference|tool-search|system-tools
     effort: high             # default reasoning effort: low|medium|high|xhigh|max
     temperature: 0.7         # default sampling temperature, 0.0-2.0 (/model overrides)
@@ -108,6 +108,7 @@ agents:                      # usage: how a model is driven
     system_file: ${appHome}/prompts/reviewer.md  # prompt from a file (inline `system` wins)
     description: Reads a diff and reports what is wrong with it   # documentation of the entry
     effort: high             # overrides the model's default (one level, no deeper)
+    context_window: 200k     # …as may the window, for an agent that knows how long its chats run
 
   scratch:
     models: ["openai:*"]     # a wildcard first entry starts in the model picker
@@ -190,6 +191,54 @@ agents:
 
 `iota config check` loads the files and reports the three layers, warning when
 no `agents.default` exists; `iota config path` prints which files a run reads.
+
+## The four layered parameters
+
+`context_window`, `effort`, `temperature` and `top_p` can be written in TWO
+layers and changed a third way, in `/model`. Which one wins is one rule, and it
+holds at every moment of a session:
+
+| Tier | Says |
+|------|------|
+| 1. `agents.<name>` | the agent's override — highest, whatever model it drives |
+| 2. `models.<name>` | what the model the chat is RUNNING declares |
+| 3. the session's current value | what the chat is running under right now — lowest |
+
+**When the config speaks the config decides; when the config is silent your
+hand-set value stands.** Adjusting a knob in `/model` is the answer for what no
+declaration covers, not a permanent override of one — to change a config for
+good, edit it.
+
+That third tier is why iota remembers not just each value but where it came
+from, and what happens at each of the four moments follows from it:
+
+| Moment | What happens |
+|--------|--------------|
+| A new session starts | the two config layers are evaluated: agent, else model, else the built-in default |
+| `/model` switches model | evaluated again against the NEW model — and a value the chat had INHERITED from the model it is leaving is dropped rather than carried over, while one you set by hand is kept |
+| `/model` changes a knob | no evaluation: the value is yours, it applies at once, and it survives a later switch that finds no declaration |
+| `iota resume` | no evaluation: the bundle's values and their origins come back as they were. Only a parameter the bundle never recorded is evaluated |
+
+So switching from a model with a 400k window to one that declares none puts you
+back on the default rather than silently keeping 400k — but a window you chose
+in the Context tab follows you. And resuming an old session after editing
+`agents:` continues that session as it was: the new declaration reaches it the
+first time you switch models inside it, so a conversation never changes shape
+halfway through because a file on disk did.
+
+Sessions written by older builds have no record of where their values came
+from; those values are treated as yours, which is the reading that cannot lose
+something you chose.
+
+:::note
+
+`defer_mode` is not one of the four. It lives in `models:` alone and does not
+follow the model: the deferring wrapper is built once, at startup, so switching
+to a model that asks for a different mode prints a note saying the session
+keeps the mode it started with — [deferred MCP tools](./mcp.md#deferred-loading)
+are mounted once.
+
+:::
 
 ## Variable expansion
 

@@ -72,7 +72,7 @@ or `agents:`, the prompt from `agents.<name>.system`, and agent mode from
 
 Headless resume (`iota resume <id> -m "…"`) takes what you did not pass from
 the session bundle: the model (when the session was recorded under the same
-provider type), temperature, reasoning effort, context window and image
+provider type), temperature, `top_p`, reasoning effort, context window and image
 settings all replay, and an explicit `-M` still wins. A resumed run prints
 `Resumed session <id> (<n> messages)` on stderr, so stdout stays the reply (or
 the JSON report) alone; the new turn is appended only when it succeeds.

@@ -78,6 +78,11 @@ models:
     defer_mode: system-tools
 ```
 
+The mode belongs to the session, not to the model you are talking to: the
+deferring wrapper is built once, at startup, so switching model with `/model`
+prints a note when the model you arrive at asks for a different mode and keeps
+the one the session started with. Changing it means a new session.
+
 ## Seeing what is connected
 
 `/tools` opens a tabbed read-only view of the model's capabilities: a
