@@ -168,7 +168,7 @@ export default function Home(): React.ReactElement {
               install box stays two commands (design/DESIGN.md §7), and the third
               one — the PowerShell line — lives in the docs behind this link. */}
           <p className={styles.facts}>
-            v0.1.0&nbsp; · &nbsp;7.56 MiB&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
+            v0.2.0&nbsp; · &nbsp;7.57 MiB&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
             <Link className={styles.factLink} to="/docs/install">
               Windows
             </Link>

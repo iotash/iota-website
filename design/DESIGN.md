@@ -402,7 +402,7 @@ This is the shipping English copy. It is set on the page exactly as written here
 
 ### Facts
 
-> `v0.1.0  ·  7.56 MiB  ·  MIT  ·  macOS, Linux and `[`Windows`](/docs/install)
+> `v0.2.0  ·  7.57 MiB  ·  MIT  ·  macOS, Linux and `[`Windows`](/docs/install)
 
 The platform fact is the only place the homepage names Windows, and `Windows` is
 a link to the install page. The install box stays at two commands: a third one
@@ -461,8 +461,8 @@ checked: `meta.json`, `messages.jsonl`, `/debug`, `iota run`, `~/.iota.yaml`. "W
 the sentence about not rebuilding the terminal, because that is the one place a decision is being
 explained rather than a fact stated.
 
-One claim worth re-checking before launch: the **7.56 MiB** binary size is the stripped arm64
-`target/release/iota` (7924480 bytes) as the iota repo's `scripts/size.sh` measures it — MiB to two
+One claim worth re-checking every release: the **7.57 MiB** binary size is the stripped arm64
+`target/release/iota` (7941136 bytes) as the iota repo's `scripts/size.sh` measures it — MiB to two
 decimals, the same unit that repo uses — and an x86_64 build will differ. The line count is `src/` only — 71k lines,
 rounded down to ~70k; the 32k lines under `tests/` are not counted in it.
 
