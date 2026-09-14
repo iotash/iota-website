@@ -1,7 +1,7 @@
 ---
 id: quick-start
 title: Your first run
-description: The commands iota takes, the nine flags, and the environment variables that carry API keys.
+description: The commands iota takes, the nine flags, and the environment variables iota reads.
 sidebar_label: Your first run
 ---
 
@@ -88,3 +88,18 @@ the JSON report) alone; the new turn is appended only when it succeeds.
 The API key is **env var > `providers.<name>.key`** — never a flag, so it stays
 out of the shell history and out of `ps`. The two per-run flags that overlap the
 config (`-M`, `-s`) win over it for that one invocation.
+
+Two more, `IOTA_SHELL` and `IOTA_GIT_BASH_PATH`, choose what the `shell`
+toolset runs — see [which shell runs it](./builtin-toolsets.md#which-shell-runs-it).
+
+One decides whether the terminal gets colors at all:
+
+| Variable | What it does |
+|----------|--------------|
+| `NO_COLOR` | Set to any non-empty value ([no-color.org](https://no-color.org)), it turns color off for the run — as does `TERM=dumb`, or a stdout that is not a terminal. The chat itself (replies, tool output, diffs) is then plain text with no escape sequence at all; the frame around it (the composer, the status row, the panels) keeps bold, faint and reverse video so it stays readable, but drops every color. Images still render in color: their pixels are the picture |
+
+And one is for whoever is debugging iota itself:
+
+| Variable | What it does |
+|----------|--------------|
+| `IOTA_LOG` | A file path. When set, iota appends its internal diagnostics there — its own events at debug level, its libraries' (the MCP client, HTTP) at info — one timestamped line each, no color. It is a developer's tap, not a switch for warnings: everything a run wants you to see is printed on stderr or in the chat whether or not this is set. A path that cannot be opened is one `Warning:` line and the run goes on |

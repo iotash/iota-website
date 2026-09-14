@@ -58,7 +58,7 @@ Wherever a model is named — `agents.<name>.models`, a `models:` shorthand,
 |------|-------|
 | `sonnet` | the `models:` entry called `sonnet` |
 | `anthropic:claude-sonnet-4` | that model id, on that provider (everything after the FIRST colon is the id, so `openrouter:anthropic/claude-3.5-sonnet` works) |
-| `anthropic:*` | every model the provider lists, fetched at startup |
+| `anthropic:*` | every model the provider lists, fetched when the picker opens |
 
 :::warning
 
@@ -139,6 +139,28 @@ iota run default -M "deepseek:*"
 `-M` accepts a candidate's name, a bare model id, or `provider:id`. A model
 outside the agent's `models:` list is a warning, not a refusal — the list is
 advice about what works well here, not a whitelist.
+
+## The candidate set is what `/model` offers
+
+`agents.<name>.models` is also the row list of the [`/model`](./slash-commands.md)
+picker. Entries and inline `provider:id`s are rows on the spot; every
+`provider:*` in the set is a listing request, and **several of them go out at
+once** — the wait is the slowest endpoint, not the sum of them, and Esc cancels
+all of them together.
+
+A source that cannot answer costs **only its own rows**: `provider: <what went
+wrong>` appears as the panel's dim subtitle and everything else is listed as if
+that source had never been asked. Nothing takes the picker away from you,
+because the picker is a combo box — its input row is open from the first frame,
+filters the list as you type, and commits what you typed through a `use "…" as
+typed` row. A provider that does not implement a model listing at all (most
+relays) is therefore an ordinary case, not a failure mode.
+
+Rows on the endpoint the session is talking to are written bare; rows from
+another provider carry it (`relay:vendor/model`). Choosing one of those is
+reported rather than applied — a session keeps the endpoint it started on,
+since the history it replays is that dialect's own — and the message names the
+`iota run <agent> -M provider:id` that starts a run there.
 
 ## One layer per key
 
