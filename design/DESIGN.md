@@ -396,9 +396,18 @@ This is the shipping English copy. It is set on the page exactly as written here
 
 ### Install
 
-> `$ brew install iotash/tap/iota`
->
-> or `cargo install --git https://github.com/iotash/iota`
+The box is a strip of four tabs over one command line, each the whole command with the prompt
+character its shell shows; the copy button copies the active one. curl leads — `iota.sh/install.sh`
+and `iota.sh/install.ps1` serve the latest release's installers (Cloudflare Pages functions in
+`functions/`) — so the first thing a visitor sees is one line that works on macOS and Linux.
+
+> **curl** · `$ curl -fsSL https://iota.sh/install.sh | sh`
+> **Homebrew** · `$ brew install iotash/tap/iota`
+> **PowerShell** · `> powershell -ExecutionPolicy Bypass -c "irm https://iota.sh/install.ps1 | iex"`
+> **cargo** · `$ cargo install --git https://github.com/iotash/iota`
+
+The "or cargo install …" line under the box is gone: cargo is a tab. The platform fact under the
+box still names Windows and links to the install page.
 
 ### Facts
 

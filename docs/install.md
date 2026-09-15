@@ -1,7 +1,7 @@
 ---
 id: install
 title: Installation
-description: Homebrew, a curl one-liner, a PowerShell one-liner, cargo, or a build from source. macOS, Linux and Windows.
+description: A curl one-liner, Homebrew, a PowerShell one-liner, cargo, or a build from source. macOS, Linux and Windows.
 sidebar_label: Installation
 ---
 
@@ -11,29 +11,36 @@ iota is a single binary. Pick whichever of the routes below you already have a
 package manager for — the first three download a prebuilt binary, the last two
 build it.
 
+## Shell
+
+```bash
+curl -fsSL https://iota.sh/install.sh | sh
+```
+
+`iota.sh/install.sh` is the shell installer of the latest release — the same
+`iota-installer.sh` that sits beside the archives on the GitHub release, served
+from this domain so the line stays short and never names a version. It fetches
+the prebuilt binary for your platform, verifies its checksum and puts it in
+`~/.cargo/bin` (or `$CARGO_HOME/bin`), adding that directory to your `PATH` if
+it is not there already. No Rust toolchain needed. To read it before running it:
+
+```bash
+curl -fsSL https://iota.sh/install.sh
+```
+
 ## Homebrew
 
 ```bash
 brew install iotash/tap/iota
 ```
 
-## Shell
-
-```bash
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/iotash/iota/releases/latest/download/iota-installer.sh | sh
-```
-
-Fetches the prebuilt binary for your platform from the latest release, verifies
-its checksum and puts it in `~/.cargo/bin` (or `$CARGO_HOME/bin`), adding that
-directory to your `PATH` if it is not there already. No Rust toolchain needed.
-
 ## PowerShell (Windows)
 
 ```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://github.com/iotash/iota/releases/latest/download/iota-installer.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://iota.sh/install.ps1 | iex"
 ```
 
-The same thing for Windows: it fetches `iota-x86_64-pc-windows-msvc.zip`, checks
+The same thing for Windows — `iota.sh/install.ps1` is the latest release's `iota-installer.ps1`: it fetches `iota-x86_64-pc-windows-msvc.zip`, checks
 its SHA-256 and puts `iota.exe` in `%USERPROFILE%\.cargo\bin` (or
 `%CARGO_HOME%\bin`), adding that directory to your `PATH` if it is not there
 already. No Rust toolchain needed.

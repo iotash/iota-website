@@ -11,10 +11,21 @@ import styles from './index.module.css';
 // footer (design/DESIGN.md §6, §8.5). LayoutProvider still gives it colour
 // mode, so the page follows the system theme.
 
-// Homebrew leads, as the design puts it (design/DESIGN.md §7): the tap is
-// iotash/homebrew-tap and a release writes Formula/iota.rb into it.
-const INSTALL_COMMAND = 'brew install iotash/tap/iota';
-const ALT_INSTALL_COMMAND = 'cargo install --git https://github.com/iotash/iota';
+// The install box is a tab strip over one command line (design/DESIGN.md §7): the
+// curl one-liner leads — https://iota.sh/install.sh serves the latest release's
+// installer — and Homebrew, PowerShell and cargo are one click away. Each entry
+// is the whole command, with the prompt character the shell would show.
+const INSTALLS: {id: string; label: string; prompt: string; command: string}[] = [
+  {id: 'curl', label: 'curl', prompt: '$', command: 'curl -fsSL https://iota.sh/install.sh | sh'},
+  {id: 'brew', label: 'Homebrew', prompt: '$', command: 'brew install iotash/tap/iota'},
+  {
+    id: 'powershell',
+    label: 'PowerShell',
+    prompt: '>',
+    command: 'powershell -ExecutionPolicy Bypass -c "irm https://iota.sh/install.ps1 | iex"',
+  },
+  {id: 'cargo', label: 'cargo', prompt: '$', command: 'cargo install --git https://github.com/iotash/iota'},
+];
 
 const DOES = [
   'run an agent you named in the config — its model, its prompt, its tools',
@@ -51,26 +62,63 @@ const LINKS: {to: string; label: string; note: string}[] = [
 ];
 
 function InstallBox() {
+  const [active, setActive] = useState(0);
   const [copied, setCopied] = useState(false);
+  const current = INSTALLS[active];
   const copy = useCallback(() => {
-    navigator.clipboard?.writeText(INSTALL_COMMAND).then(() => {
+    navigator.clipboard?.writeText(current.command).then(() => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
     });
-  }, []);
+  }, [current.command]);
+  const onKey = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      const step = e.key === 'ArrowRight' ? 1 : INSTALLS.length - 1;
+      setActive((i) => (i + step) % INSTALLS.length);
+      setCopied(false);
+    },
+    [],
+  );
 
   return (
-    <div className={styles.install}>
-      <span className={styles.prompt}>$</span>
-      <code className={styles.command}>{INSTALL_COMMAND}</code>
-      <button
-        type="button"
-        className={styles.copy}
-        onClick={copy}
-        aria-label="Copy the install command">
-        <Copy size={13} />
-        {copied ? 'copied' : 'copy'}
-      </button>
+    <div className={styles.installBox}>
+      <div className={styles.tabs} role="tablist" aria-label="Install with" onKeyDown={onKey}>
+        {INSTALLS.map((entry, i) => (
+          <button
+            key={entry.id}
+            type="button"
+            role="tab"
+            id={`install-tab-${entry.id}`}
+            aria-selected={i === active}
+            aria-controls="install-command"
+            tabIndex={i === active ? 0 : -1}
+            className={i === active ? styles.tabActive : styles.tab}
+            onClick={() => {
+              setActive(i);
+              setCopied(false);
+            }}>
+            {entry.label}
+          </button>
+        ))}
+      </div>
+      <div
+        className={styles.install}
+        id="install-command"
+        role="tabpanel"
+        aria-labelledby={`install-tab-${current.id}`}>
+        <span className={styles.prompt}>{current.prompt}</span>
+        <code className={styles.command}>{current.command}</code>
+        <button
+          type="button"
+          className={styles.copy}
+          onClick={copy}
+          aria-label={`Copy the ${current.label} install command`}>
+          <Copy size={13} />
+          {copied ? 'copied' : 'copy'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -160,13 +208,8 @@ export default function Home(): React.ReactElement {
           </p>
 
           <InstallBox />
-          <p className={styles.alt}>
-            <span>or</span>
-            <code>{ALT_INSTALL_COMMAND}</code>
-          </p>
-          {/* The platform fact is the one place the homepage mentions Windows: the
-              install box stays two commands (design/DESIGN.md §7), and the third
-              one — the PowerShell line — lives in the docs behind this link. */}
+          {/* The platform fact is the one place the homepage names Windows; the
+              PowerShell line itself is a tab in the box above (design/DESIGN.md §7). */}
           <p className={styles.facts}>
             v0.2.1&nbsp; · &nbsp;7.72 MiB&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
             <Link className={styles.factLink} to="/docs/install">
