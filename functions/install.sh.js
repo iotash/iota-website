@@ -5,7 +5,7 @@
 // `curl` without -L still gets the script and not a 302.
 const SOURCE = 'https://github.com/iotash/iota/releases/latest/download/iota-installer.sh';
 
-export async function onRequestGet() {
+async function serve(method) {
   const upstream = await fetch(SOURCE, {redirect: 'follow', cf: {cacheTtl: 300, cacheEverything: true}});
   if (!upstream.ok) {
     return new Response(`#!/bin/sh\necho "iota: the installer could not be fetched from GitHub (${upstream.status})" >&2\nexit 1\n`, {
@@ -13,7 +13,9 @@ export async function onRequestGet() {
       headers: {'content-type': 'application/x-sh; charset=utf-8', 'cache-control': 'no-store'},
     });
   }
-  return new Response(upstream.body, {
+  // HEAD gets the headers alone; a 404 there (the static fallback's) would make a tool that probes
+  // first give up on a URL that serves.
+  return new Response(method === 'HEAD' ? null : upstream.body, {
     status: 200,
     headers: {
       'content-type': 'application/x-sh; charset=utf-8',
@@ -22,3 +24,6 @@ export async function onRequestGet() {
     },
   });
 }
+
+export const onRequestGet = () => serve('GET');
+export const onRequestHead = () => serve('HEAD');
