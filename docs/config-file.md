@@ -130,6 +130,8 @@ iota run reviewer -m "what is wrong with this diff?"
 iota run default -M sonnet -m "hi"
 
 # -M also takes provider:id, which moves the run to that endpoint
+# (and brings the models: entry serving that pair, if there is one — otherwise nothing:
+#  the parameters of the candidate it replaces do not follow it)
 iota run default -M "deepseek:deepseek-reasoner" -m "hi"
 
 # …and provider:* starts in the model picker
