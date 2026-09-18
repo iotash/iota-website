@@ -1,7 +1,7 @@
 ---
 id: mcp
 title: MCP servers
-description: stdio and HTTP MCP servers, namespaced tools, and deferred loading.
+description: stdio and HTTP MCP servers, iota mcp add/list/remove, OAuth 2.1 login, namespaced tools, and deferred loading.
 sidebar_label: MCP servers
 ---
 
@@ -56,6 +56,58 @@ agents:
     models: [gpt5]
     mcp_servers: [github]    # load only these MCP servers; [] = none; key absent = all
 ```
+
+## Managing servers: `iota mcp`
+
+`iota mcp` edits the `mcp_servers:` block from the command line, so a server is
+one command away rather than a hand-written entry:
+
+```bash
+iota mcp add fs -- npx -y @modelcontextprotocol/server-filesystem /tmp   # stdio
+iota mcp add fs -e LOG_LEVEL=info --defer "file tools" -- npx -y server-fs
+iota mcp add gh --url https://mcp.example.com/mcp --header 'Authorization: Bearer ${env:GH_TOKEN}'
+iota mcp add nb --url https://namebeta.com/api/mcp --auth oauth   # then: iota mcp login nb
+iota mcp list [--scope user|project|all] [--json] [--probe]      # name, transport, file, auth
+iota mcp get nb                                                  # the entry as declared
+iota mcp remove nb [--scope user|project]
+```
+
+**Two scopes, no third file.** `--scope user` (the default) writes
+`~/.iota.yaml`, `--scope project` writes `./.iota.yaml`, and `-c <file>` makes
+that file the only scope. A project file is shared, so a header or environment
+value written there must be a `${…}` reference (`${env:GH_TOKEN}`), never the
+secret itself — `add` refuses otherwise. `list` reads both tiers the way a run
+merges them (the project entry wins a name), `--probe` connects to each server
+and reports the outcome, and `--json` is one array with a stable shape.
+
+**The block is machine-managed.** `add` and `remove` rewrite the `mcp_servers:`
+section alone and leave every other byte of the file as you wrote it —
+comments, blank lines, the order of the layers. What they do not keep is a
+comment *inside* the block: the entries are serialised afresh each time. Adding
+a name that already exists in the target file is refused; remove it first.
+
+## OAuth 2.1
+
+A server with `auth: oauth` (or added with `--auth oauth`) is one you log in to:
+
+```bash
+iota mcp login nb            # opens the browser; --no-browser prints the URL instead
+iota mcp logout nb           # forgets the tokens (revoking them when the server allows)
+```
+
+`login` discovers the authorization server (RFC 9728 → RFC 8414), registers a
+client when the server offers it (RFC 7591), and runs the PKCE authorization
+code flow: the browser opens (`$BROWSER` when set, else the platform opener;
+the URL is printed either way, for a machine without a desktop), a loopback
+listener on `127.0.0.1:<random port>/callback` collects the code — or you paste
+the redirect URL back into the terminal — and the tokens land in
+`~/.iota/mcp/auth/<name>.json` (mode 0600). A token never enters a config
+file. At run time the bearer token goes on every request and is refreshed
+when the server rejects it; a server with no usable token is reported as
+`not logged in: run iota mcp login <name>` and left out of that run while every
+other server loads. In the chat, `/mcp` shows each server's login state,
+`/mcp login <name>` runs the same flow (ESC gives up waiting) and reconnects
+the server, and `/mcp logout <name>` takes it down.
 
 ## Deferred loading
 
