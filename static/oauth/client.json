@@ -2,7 +2,7 @@
   "client_id": "https://iota.sh/oauth/client.json",
   "client_name": "iota",
   "client_uri": "https://iota.sh",
-  "logo_uri": "https://iota.sh/img/icon.png",
+  "logo_uri": "https://iota.sh/img/iota-app-icon.png",
   "software_id": "sh.iota.cli",
   "redirect_uris": [
     "http://127.0.0.1/callback",
