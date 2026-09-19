@@ -66,7 +66,7 @@ one command away rather than a hand-written entry:
 iota mcp add fs -- npx -y @modelcontextprotocol/server-filesystem /tmp   # stdio
 iota mcp add fs -e LOG_LEVEL=info --defer "file tools" -- npx -y server-fs
 iota mcp add gh --url https://mcp.example.com/mcp --header 'Authorization: Bearer ${env:GH_TOKEN}'
-iota mcp add nb --url https://namebeta.com/api/mcp --auth oauth   # then: iota mcp login nb
+iota mcp add nb --url https://namebeta.com/api/mcp                # then: iota mcp login nb
 iota mcp list [--scope user|project|all] [--json] [--probe]      # name, transport, file, auth
 iota mcp get nb                                                  # the entry as declared
 iota mcp remove nb [--scope user|project]
@@ -88,7 +88,8 @@ a name that already exists in the target file is refused; remove it first.
 
 ## OAuth 2.1
 
-A server with `auth: oauth` (or added with `--auth oauth`) is one you log in to:
+A server that answers the first request with `401` (the MCP way of asking for a
+login) is one you log in to — nothing to declare, as in Claude Code and Codex:
 
 ```bash
 iota mcp login nb            # opens the browser; --no-browser prints the URL instead
@@ -108,6 +109,14 @@ when the server rejects it; a server with no usable token is reported as
 other server loads. In the chat, `/mcp` shows each server's login state,
 `/mcp login <name>` runs the same flow (ESC gives up waiting) and reconnects
 the server, and `/mcp logout <name>` takes it down.
+
+`auth:` is optional. Left out, a server is *auto*: with a token file it connects
+through OAuth, without one a `401`/`403` at the handshake is reported as
+`not logged in: run iota mcp login <name>`, and a server that never asks is
+plain HTTP. An entry whose `headers:` carry an `Authorization` header is never
+sent to a login — that credential is the one to fix. `auth: oauth` (`--auth
+oauth`) forces the login path; `auth: none` (`--auth none`) forbids it, so a
+`401` is a plain connection failure.
 
 A login identifies iota one of three ways, in order: the entry's `client_id`
 (a client registered out of band — `iota mcp add … --client-id <id>
