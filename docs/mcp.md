@@ -109,6 +109,21 @@ other server loads. In the chat, `/mcp` shows each server's login state,
 `/mcp login <name>` runs the same flow (ESC gives up waiting) and reconnects
 the server, and `/mcp logout <name>` takes it down.
 
+A login identifies iota one of three ways, in order: the entry's `client_id`
+(a client registered out of band — `iota mcp add … --client-id <id>
+--client-secret-env VAR`, the secret only ever a `${env:VAR}` reference), else
+dynamic registration when the server offers it, else iota's Client ID Metadata
+Document (`https://iota.sh/oauth/client.json`) when the server accepts one —
+the shape of an authorization server like Logto, which registers nobody. A
+pre-registered client's redirect URI must match what was registered, so for it
+`login` listens on `127.0.0.1:17801` (or the entry's `redirect_port`,
+`--redirect-port` on `add`) and `iota mcp get` shows the `redirect_uri` to
+register. The authorization request asks for the scopes the resource names
+(plus `offline_access` when the server lists it), carries the RFC 8707
+`resource`, and sends `prompt=consent` — a Logto tenant answers a request
+without it with a bare `access_denied` after the consent page; a server that
+does not know the parameter ignores it.
+
 ## Deferred loading
 
 A server can be marked for deferred loading: instead of advertising every
