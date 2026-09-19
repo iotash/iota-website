@@ -2,3 +2,7 @@
   Content-Type: application/json; charset=utf-8
   Cache-Control: public, max-age=300
   Access-Control-Allow-Origin: *
+/oauth/client-v2.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: public, max-age=60
+  Access-Control-Allow-Origin: *
