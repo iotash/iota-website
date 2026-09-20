@@ -66,7 +66,7 @@ one command away rather than a hand-written entry:
 iota mcp add fs -- npx -y @modelcontextprotocol/server-filesystem /tmp   # stdio
 iota mcp add fs -e LOG_LEVEL=info --defer "file tools" -- npx -y server-fs
 iota mcp add gh --url https://mcp.example.com/mcp --header 'Authorization: Bearer ${env:GH_TOKEN}'
-iota mcp add nb --url https://namebeta.com/api/mcp                # then: iota mcp login nb
+iota mcp add nb --url https://namebeta.com/api/mcp                # asks for the login on the spot
 iota mcp list [--scope user|project|all] [--json] [--probe]      # name, transport, file, auth
 iota mcp get nb                                                  # the entry as declared
 iota mcp remove nb [--scope user|project]
@@ -90,6 +90,13 @@ a name that already exists in the target file is refused; remove it first.
 
 A server that answers the first request with `401` (the MCP way of asking for a
 login) is one you log in to — nothing to declare, as in Claude Code and Codex:
+
+`iota mcp add --url` probes the endpoint as soon as the entry is written: a
+server that answers `401` gets the login right there (the browser opens; `--no-browser`
+prints the URL instead, `--no-login` skips it for a script or a machine without a
+desktop), a server that answers without one is left alone, and one that cannot be
+reached is written anyway with a note. `iota mcp login` is how you log in again,
+or later:
 
 ```bash
 iota mcp login nb            # opens the browser; --no-browser prints the URL instead
