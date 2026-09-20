@@ -113,9 +113,9 @@ the redirect URL back into the terminal — and the tokens land in
 file. At run time the bearer token goes on every request and is refreshed
 when the server rejects it; a server with no usable token is reported as
 `not logged in: run iota mcp login <name>` and left out of that run while every
-other server loads. In the chat, `/mcp` shows each server's login state,
-`/mcp login <name>` runs the same flow (ESC gives up waiting) and reconnects
-the server, and `/mcp logout <name>` takes it down.
+other server loads. In the chat, `/tools` shows each server's state, a server
+waiting for a login included; the login itself is `iota mcp login <name>` from
+the shell, and a new session picks the token up.
 
 `auth:` is optional. Left out, a server is *auto*: with a token file it connects
 through OAuth, without one a `401`/`403` at the handshake is reported as
