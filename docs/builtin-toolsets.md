@@ -65,6 +65,16 @@ Safety model — the same one Claude Code and Codex CLI use:
   asks for confirmation in the conversation (allow once / allow for this
   session / deny), and non-interactive `-m` runs reject it — set `auto_run: true` to
   waive that.
+- **`iota` itself runs outside the sandbox.** A call whose first word is the
+  running binary — `iota mcp add …`, `iota mcp login <name>`, a child agent's
+  `iota run <agent> -m "<task>"` — is spawned without the sandbox: what it does
+  (write a config file in `$HOME`, open a browser, reach an API) is exactly what
+  the sandbox refuses, and the binary is one you installed. Only that shape
+  leaves: `iota` in a pipe or a chain (`iota mcp list | head`, `… && …`, `;`, a
+  `$(…)`) stays in. Approval is as usual: a sandboxed set without `auto_run` asks
+  about such a call the way an unsandboxed set asks about every call, the prompt
+  and the call header marked `(outside the sandbox)`; with `auto_run: true`
+  nothing is asked.
 - Output is capped at 32 KB and 512 lines (head + tail kept, middle elided,
   bounded even while streaming). Each call is capped at **10 minutes** unless
   it asks for a different `timeout`; while a command runs, the status-line
@@ -140,10 +150,11 @@ run from the `shell` tool, which is why the set is the one that matters most. Th
 full run of that `agents:` entry — its own model, tools, MCP servers and
 session. Start it with `background: true` and its answer comes back as the
 notice above. For it to write without a user to ask, set
-`tools.code.auto_write` / `tools.shell.auto_run` on that agent; for it to
-reach an API at all, the parent's sandbox has to allow it, since
-`network: false` (the default) blocks the child's HTTP too. How to dispatch,
-to whom, and how many at once is your prompt's business, not the binary's.
+`tools.code.auto_write` / `tools.shell.auto_run` on that agent. The child runs
+outside the parent's sandbox (the rule above) and is isolated by its own agent's
+configuration — its own `shell` sandbox, its own approvals — so the parent's
+`network: false` is not in its way. How to dispatch, to whom, and how many at
+once is your prompt's business, not the binary's.
 
 ## `code` — coding tools
 

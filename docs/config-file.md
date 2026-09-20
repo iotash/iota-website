@@ -142,6 +142,32 @@ iota run default -M "deepseek:*"
 outside the agent's `models:` list is a warning, not a refusal — the list is
 advice about what works well here, not a whitelist.
 
+## The system prompt: what iota adds to yours
+
+An agent with `tools:` does not go out with your `system:` alone. iota puts a
+short **harness** paragraph of its own ahead of it — under 1.5 KB, no
+configuration key:
+
+- two sentences of identity (it runs inside iota, a coding agent in your
+  terminal) and two rules: a tool call you decline is not retried, and a
+  command the sandbox refused is reported as such rather than rewritten;
+- an `<environment>` block — the project root, the platform, the shell, the
+  date, the `iota` binary, and the user and project config files (or the `-c`
+  file), a missing one written as `(absent)`;
+- with the `shell` set, an `<iota_cli>` block: that `iota` itself runs outside
+  the sandbox, its verbs (`iota mcp add|list|get|remove|login|logout`, `iota
+  config check|path|init`, `iota list …`, `iota run <agent> -m "<task>"`), and
+  the three rules — MCP servers change through `iota mcp`, everything else by
+  editing the config file and running `iota config check`, and every change
+  applies from the next session.
+
+Your `system:` / `system_file:` / `-s` follows, inside `<instructions>`; the
+AGENTS.md overlay and the skills catalog come after that. Like the overlay, the
+harness is composed at send time and never stored — a resumed session and an
+upgraded binary both get the current one — and `/model`'s System tab shows the
+prompt exactly as sent. **An agent without `tools:` sends nothing extra**: a
+chat-only or JSON-pipeline agent's bytes are exactly its own prompt.
+
 ## The candidate set is what `/model` offers
 
 `agents.<name>.models` is also the row list of the [`/model`](./slash-commands.md)
