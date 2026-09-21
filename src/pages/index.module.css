@@ -256,29 +256,7 @@
 
 .sectionMarkTight { margin-top: 52px; }
 
-.philosophy {
-  margin: 14px 0 0;
-  font-size: 16px;
-  line-height: 1.85;
-  color: var(--ifm-font-color-base);
-}
-
-.lists {
-  display: flex;
-  gap: 36px;
-  margin-top: 16px;
-}
-.list { flex: 1; min-width: 0; }
-
-.listHeadDoes,
-.listHeadNot {
-  margin: 0 0 10px;
-  font-family: var(--iota-font-mono);
-  font-size: 12.5px;
-  font-weight: 700;
-}
-.listHeadDoes { color: var(--ifm-color-success); }
-.listHeadNot  { color: var(--iota-text-3); }
+.list { margin-top: 16px; }
 
 .item {
   display: flex;
@@ -344,7 +322,6 @@
   .column { width: 100%; padding: 48px 18px 56px; }
   .headline { font-size: 29px; }
   .lead { font-size: 16px; }
-  .lists { flex-direction: column; gap: 28px; }
   .termBody { font-size: 12px; }
   .alt { flex-wrap: wrap; }
   .linkRow { flex-wrap: wrap; }

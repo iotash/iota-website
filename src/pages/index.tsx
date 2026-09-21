@@ -28,15 +28,15 @@ const INSTALLS: {id: string; label: string; prompt: string; command: string}[] =
 ];
 
 const DOES = [
-  'run an agent you named in the config — its model, its prompt, its tools',
-  'call MCP tools, and run bash inside an OS sandbox (macOS and Linux)',
-  'stream a reply, and let you keep typing while it arrives',
-  'render markdown, tables and math as ANSI, inline',
-  'save every session as plain text you can resume, grep or delete',
+  'run an agent you named in one YAML file — its model, its prompt, its tools',
+  'talk to OpenAI, Anthropic, Gemini, or any endpoint that speaks their APIs — yours included',
+  'run bash under an OS sandbox, edit code, call MCP tools — and ask before it writes',
+  'stream a reply while you keep typing; render markdown, tables and math inline',
+  'save every session as plain files you can resume, grep or export',
+  'run child agents from bash: iota run <agent> -m "<task>"',
 ];
 
 const DOES_NOT = [
-  'run without a config file — a first run writes the starter for you, and then it is yours',
   'run a daemon or a server, or leave anything running after you quit',
   'ask you to sign in, or phone home',
   'write outside the project root unless you say so',
@@ -211,7 +211,7 @@ export default function Home(): React.ReactElement {
           {/* The platform fact is the one place the homepage names Windows; the
               PowerShell line itself is a tab in the box above (design/DESIGN.md §7). */}
           <p className={styles.facts}>
-            v0.3.1&nbsp; · &nbsp;8.04 MiB&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
+            v0.3.1&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
             <Link className={styles.factLink} to="/docs/install">
               Windows
             </Link>
@@ -222,40 +222,24 @@ export default function Home(): React.ReactElement {
             An actual session — agent mode, one bash call, one answer. No cuts.
           </p>
 
-          <h2 className={styles.sectionMark}># why it is small</h2>
-          <p className={styles.philosophy}>
-            The terminal is already an interface: it has scrollback, a clipboard, pipes and a
-            shell. We did not want to rebuild any of that in a window, so iota adds the one thing
-            the terminal is missing — a model that can use your tools — and stops there. Nothing it
-            does is hidden from you: a session is a directory holding meta.json and messages.jsonl,
-            one JSON record per line, appended as you talk, and /debug shows the exact request and
-            response bodies that went over the wire. The config is one YAML file with three maps in
-            it. There is no account, no daemon and no telemetry. And there is nothing to be locked
-            into — any endpoint that speaks OpenAI, Anthropic or Gemini works, including one you run
-            yourself, and a child agent is just iota run &lt;agent&gt; -m &quot;&lt;task&gt;&quot;
-            run from bash, like anything else.
-          </p>
+          <h2 className={styles.sectionMark}># what it does</h2>
+          <div className={styles.list}>
+            {DOES.map((item) => (
+              <p className={styles.item} key={item}>
+                <Check size={14} className={styles.iconDoes} />
+                <span>{item}</span>
+              </p>
+            ))}
+          </div>
 
-          <h2 className={styles.sectionMarkTight}># what it is, and is not</h2>
-          <div className={styles.lists}>
-            <div className={styles.list}>
-              <p className={styles.listHeadDoes}>it does</p>
-              {DOES.map((item) => (
-                <p className={styles.item} key={item}>
-                  <Check size={14} className={styles.iconDoes} />
-                  <span>{item}</span>
-                </p>
-              ))}
-            </div>
-            <div className={styles.list}>
-              <p className={styles.listHeadNot}>it does not</p>
-              {DOES_NOT.map((item) => (
-                <p className={styles.item} key={item}>
-                  <Minus size={14} className={styles.iconNot} />
-                  <span>{item}</span>
-                </p>
-              ))}
-            </div>
+          <h2 className={styles.sectionMarkTight}># what it does not</h2>
+          <div className={styles.list}>
+            {DOES_NOT.map((item) => (
+              <p className={styles.item} key={item}>
+                <Minus size={14} className={styles.iconNot} />
+                <span>{item}</span>
+              </p>
+            ))}
           </div>
 
           <div className={styles.links}>
@@ -270,7 +254,7 @@ export default function Home(): React.ReactElement {
         </main>
 
         <footer className={styles.footer}>
-          <span>MIT licensed · joyqi</span>
+          <span>MIT licensed</span>
           <span>iota.sh</span>
         </footer>
       </div>

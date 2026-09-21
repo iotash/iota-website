@@ -140,7 +140,7 @@ const config: Config = {
       style: 'light',
       links: [],
       copyright:
-        '<span class="footer__note">MIT licensed · joyqi</span><span class="footer__host">iota.sh</span>',
+        '<span class="footer__note">MIT licensed</span><span class="footer__host">iota.sh</span>',
     },
     docs: {
       sidebar: {hideable: false, autoCollapseCategories: false},

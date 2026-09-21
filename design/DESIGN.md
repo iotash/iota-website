@@ -340,10 +340,10 @@ like a well-typeset README:
 5. A terminal transcript — the only picture on the page. It is a real agent-mode session
    (`iota run coder`, an agent with `workspace: true`): a bash call, its result, an answer that
    names a function and shows the two-line fix.
-6. `# why it is small` — the philosophy paragraph (section 7 below has the copy).
-7. `# what it is, and is not` — two honest lists, five items each.
+6. `# what it does` — six one-line features (section 7 below has the copy).
+7. `# what it does not` — four honest lines.
 8. Three text links out: documentation, source, changelog. Each with a half-line of context.
-9. A 56 px footer: `MIT licensed · joyqi` and `iota.sh`.
+9. A 56 px footer: `MIT licensed` and `iota.sh`.
 
 There is exactly one button on the page and it copies the install command. Everything else is a
 text link. Headline is 38 px desktop / 29 px mobile, so nothing shouts. Mobile is the same column
@@ -424,33 +424,26 @@ not the homepage.
 
 > An actual session — agent mode, one bash call, one answer. No cuts.
 
-### `# why it is small`
+### `# what it does`
 
-> The terminal is already an interface: it has scrollback, a clipboard, pipes and a shell. We did
-> not want to rebuild any of that in a window, so iota adds the one thing the terminal is missing —
-> a model that can use your tools — and stops there. Nothing it does is hidden from you: a session
-> is a directory holding meta.json and messages.jsonl, one JSON record per line, appended as you
-> talk, and /debug shows the exact request and response bodies that went over the wire. The config
-> is one YAML file with three maps in it. There is no account, no daemon and no telemetry. And there
-> is nothing to be locked into — any endpoint that speaks OpenAI, Anthropic or Gemini works,
-> including one you run yourself, and a child agent is just `iota run <agent> -m "<task>"` run from
-> bash, like anything else.
+> - run an agent you named in one YAML file — its model, its prompt, its tools
+> - talk to OpenAI, Anthropic, Gemini, or any endpoint that speaks their APIs — yours included
+> - run bash under an OS sandbox, edit code, call MCP tools — and ask before it writes
+> - stream a reply while you keep typing; render markdown, tables and math inline
+> - save every session as plain files you can resume, grep or export
+> - run child agents from bash: `iota run <agent> -m "<task>"`
 
-### `# what it is, and is not`
+### `# what it does not`
 
-> **it does**
-> - run an agent you named in the config — its model, its prompt, its tools
-> - call MCP tools, and run bash inside an OS sandbox
-> - stream a reply, and let you keep typing while it arrives
-> - render markdown, tables and math as ANSI, inline
-> - save every session as plain text you can resume, grep or delete
->
-> **it does not**
-> - run before you configure an agent — iota config init writes the first one
 > - run a daemon or a server, or leave anything running after you quit
 > - ask you to sign in, or phone home
 > - write outside the project root unless you say so
 > - wrap the model in a framework you have to learn first
+
+The philosophy paragraph that used to sit here (2026-09-21) said the same in prose and was
+replaced by the list: the page names features, it does not argue for them. The size fact
+(`8.04 MiB`) left the facts line the same day — a binary size beside a version reads like a
+benchmark against other tools, which is not the point being made.
 
 ### Links out
 
@@ -460,7 +453,7 @@ not the homepage.
 
 ### Footer
 
-> `MIT licensed · joyqi` … `iota.sh`
+> `MIT licensed` … `iota.sh`
 
 ### Rules the copy follows
 
