@@ -45,7 +45,9 @@ mcp_servers:
 ```
 
 `command`, `args`, `url`, `env` and `headers` all go through [variable
-expansion](./config-file.md#variable-expansion).
+expansion](./config-reference.md#variable-expansion); every key of an entry,
+with its default and its errors, is in the [configuration
+reference](./config-reference.md#mcp_serversname).
 
 An agent picks which of them it wants with `mcp_servers:` — a list loads only
 those servers, `[]` loads none, and leaving the key out loads all of them:

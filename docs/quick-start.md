@@ -50,7 +50,7 @@ which is a run that starts from a saved session), so they go after the command.
 |------|-------|-------------|
 | `--message` | `-m` | Send a single message and print the response (non-interactive; `-` reads stdin) |
 | `--model` | `-M` | Model for this run: a `models:` entry, a bare id, or `provider:id` (`provider:*` opens the picker) |
-| `--system` | `-s` | System prompt for this run (beats the agent's `system:` / `system_file:`) |
+| `--system` | `-s` | System prompt for this run (beats the agent's `system:` / `system_file:`; what iota puts around it is on [The system prompt](./system-prompt.md)) |
 | `--config` | `-c` | Path to config file (default: `~/.iota.yaml`, then `./.iota.yaml`). Global: valid before or after the command, so `iota -c f.yaml list` and `iota list -c f.yaml` are the same |
 | `--mcp` | | MCP server (command string or URL, repeatable) |
 | `--no-save` | | Start ephemeral — nothing touches disk unless `/save` is run (interactive only) |

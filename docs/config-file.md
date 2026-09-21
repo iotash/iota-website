@@ -8,6 +8,9 @@ sidebar_label: The config file
 # The config file
 
 iota supports YAML config files for persistent settings, models and agents.
+This page is the shape of the file — the three layers, how an agent reaches a
+model, what the loader refuses. Every key, one by one, with its type, default
+and errors, is on the [configuration reference](./config-reference.md).
 
 ## Config lookup order
 
@@ -144,29 +147,13 @@ advice about what works well here, not a whitelist.
 
 ## The system prompt: what iota adds to yours
 
-An agent with `tools:` does not go out with your `system:` alone. iota puts a
-short **harness** paragraph of its own ahead of it — under 1.5 KB, no
-configuration key:
-
-- two sentences of identity (it runs inside iota, a coding agent in your
-  terminal) and two rules: a tool call you decline is not retried, and a
-  command the sandbox refused is reported as such rather than rewritten;
-- an `<environment>` block — the project root, the platform, the shell, the
-  date, the `iota` binary, and the user and project config files (or the `-c`
-  file), a missing one written as `(absent)`;
-- with the `shell` set, an `<iota_cli>` block: that `iota` itself runs outside
-  the sandbox, its verbs (`iota mcp add|list|get|remove|login|logout`, `iota
-  config check|path|init`, `iota list …`, `iota run <agent> -m "<task>"`), and
-  the three rules — MCP servers change through `iota mcp`, everything else by
-  editing the config file and running `iota config check`, and every change
-  applies from the next session.
-
-Your `system:` / `system_file:` / `-s` follows, inside `<instructions>`; the
-AGENTS.md overlay and the skills catalog come after that. Like the overlay, the
-harness is composed at send time and never stored — a resumed session and an
-upgraded binary both get the current one — and `/model`'s System tab shows the
-prompt exactly as sent. **An agent without `tools:` sends nothing extra**: a
-chat-only or JSON-pipeline agent's bytes are exactly its own prompt.
+An agent with `tools:` does not go out with your `system:` alone: iota puts a
+short **harness** paragraph of its own ahead of it — identity, an
+`<environment>` block and, with the `shell` set, an `<iota_cli>` block — and
+your prompt follows inside `<instructions>`, the AGENTS.md overlay after that.
+It is composed at send time, never stored, under 1.5 KB, with no configuration
+key; an agent without `tools:` sends nothing extra. The structure and the full
+text are on [The system prompt](./system-prompt.md).
 
 ## The candidate set is what `/model` offers
 
@@ -205,7 +192,8 @@ decoded, and five things are fatal:
 | An unknown toolset | `tools: {web: {}}` | the same |
 
 There is no migration layer and no compatibility shim: a key that silently does
-nothing is exactly the failure this audit exists to close. (A YAML *syntax*
+nothing is exactly the failure this audit exists to close. The full table of
+messages is under [Errors](./config-reference.md#errors) in the reference. (A YAML *syntax*
 error still drops the file with a warning, because the parser is the only thing
 that knows what went wrong.)
 
@@ -304,4 +292,5 @@ expansion:
 | `${pathSeparator}` / `${/}` | OS path separator (`/`) |
 | `${env:VAR}` | Value of environment variable `VAR` |
 
-Unknown variables are left untouched.
+Unknown variables are left untouched. Which fields expand, and the rules of a
+pass, are on the [reference](./config-reference.md#variable-expansion).

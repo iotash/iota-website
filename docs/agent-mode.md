@@ -26,7 +26,8 @@ directory, or the working directory itself outside a repository.
 Following the [AGENTS.md convention](https://agents.md/), every `AGENTS.md`
 from the project root down to the current directory (at most one per
 directory) is concatenated root-first — nearer files come later and override —
-capped at 32 KiB, and appended to the system prompt as a **volatile overlay**:
+capped at 32 KiB, and appended to the [system prompt](./system-prompt.md#the-agentsmd-chain)
+as a **volatile overlay**:
 composed at send time, never stored in the conversation history or the session
 file, and re-read automatically when a file changes between turns (a dim
 `AGENTS.md reloaded` notice is printed). Resuming a session elsewhere applies
@@ -44,7 +45,7 @@ higher wins):
 3. `~/.agents/skills/` — cross-client user skills
 
 Discovered skills are advertised to the model as a name + description catalog
-inside the overlay; the model activates one by calling `load_skill` with the
+inside the overlay (the [`<available_skills>` block](./system-prompt.md#available_skills)); the model activates one by calling `load_skill` with the
 skill's name, reads files the skill references through the same tool's `file`
 argument, and runs bundled scripts through the `shell` tool (enable the `shell`
 toolset for the agent if your skills need scripts). Invalid skills are
@@ -60,7 +61,8 @@ skill's instructions (the `SKILL.md` body) and directory, and the optional
 `file` argument reads a file bundled inside that directory — reads never leave
 the skill's directory. Output is size-capped with an optional `offset`/`limit`
 line window. The set can also be enabled explicitly under `tools:` like any
-other, agent mode or not.
+other, agent mode or not. Every parameter is on [Built-in
+toolsets](./builtin-toolsets.md#load_skill).
 
 ## Child agents
 
