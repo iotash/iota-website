@@ -22,6 +22,7 @@ const sidebars: SidebarsConfig = {
       items: ['builtin-toolsets', 'mcp'],
     },
     'agent-mode',
+    'hosts',
     'slash-commands',
     'examples',
   ],

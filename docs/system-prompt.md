@@ -25,7 +25,7 @@ Top to bottom, a blank line between segments:
 | Segment | Content | Sent when | Source |
 |---|---|---|---|
 | preamble | two sentences of identity and two behaviour rules (below, verbatim) | the agent's `tools:` names at least one built-in set and does not write it `false` | `src/agents/harness.rs` (`PREAMBLE`, `compose`) |
-| `<environment>` | one `key: value` line per fact: project root, platform, shell, date, the `iota` binary, the config files | same as the preamble | `harness.rs` (`environment_block`), `src/cmd/assemble.rs` (`harness_environment`) |
+| `<environment>` | one `key: value` line per fact: project root, platform, shell, date, the `iota` binary, the config files — and, inside a [terminal host](./hosts.md) iota recognises, the host's name and the ids its CLI takes | same as the preamble | `harness.rs` (`environment_block`), `src/cmd/assemble.rs` (`harness_environment`, `HarnessInputs`), `src/host` (`Presenter::environment`) |
 | `<iota_cli>` | iota's own verbs and the three rules for changing its configuration | the `shell` set is among those `tools:` keys | `harness.rs` (`IOTA_CLI`) |
 | `<instructions>` | your `system:` / `system_file:` / `-s`, verbatim | you wrote one and it is not empty; with **no** harness the prompt is sent bare, untagged | `src/agents/mod.rs` (`compose_send_history`) |
 | AGENTS.md chain | every `AGENTS.md` from the project root down to the working directory, root first, joined by a blank line — **no tag** wraps it | `workspace: true` and at least one `AGENTS.md` exists on the path | `mod.rs` (`load_agents_chain`, `Overlay::content`) |
@@ -83,6 +83,35 @@ first, because the model may read it from another directory:
 ```text
 config: /Users/someone/Work/project/ci.yaml (given with -c; the only scope)
 ```
+
+#### The host's lines
+
+Inside a terminal host iota recognises — a [herdr](./hosts.md#herdr) pane, a
+[cmux](./hosts.md#cmux) surface — the block closes with what that host tells
+the model: its name, then the ids its own CLI takes. A plain terminal adds
+nothing. In a herdr pane the tail reads:
+
+```text
+project config: /Users/someone/Work/project/.iota.yaml
+host: herdr
+herdr pane: w1:p2
+herdr workspace: w1
+herdr tab: w1:t1
+</environment>
+```
+
+| Line | Value | Where it comes from |
+|---|---|---|
+| `host:` | the host's name: `herdr` or `cmux` — one host, the innermost (a herdr pane inside a cmux window says `herdr` and nothing about cmux, see [nesting](./hosts.md#nesting)) | the detected host |
+| `herdr pane:` | the pane the chat runs in, as `herdr pane …` commands take it (`HERDR_PANE_ID`) | `host::herdr` |
+| `herdr workspace:`, `herdr tab:` | the pane's workspace and tab (`HERDR_WORKSPACE_ID`, `HERDR_TAB_ID`); each line only when herdr injected the id | `host::herdr` |
+| `cmux surface:` | the surface the chat runs in (`CMUX_SURFACE_ID`) | `host::cmux` |
+
+These lines are gathered from the host layer, not read by the prompt code — a
+host contributes them through the same capability interface that carries its
+status reporting (`EnvironmentContributor` in `src/host/mod.rs`), so a new host
+reaches the model by implementing it and nowhere else. They are the reason the
+harness text is composed after the host is detected rather than at assembly.
 
 ### `<iota_cli>`
 
