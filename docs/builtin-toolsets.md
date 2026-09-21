@@ -331,7 +331,7 @@ root-`.gitignore` matches are skipped.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
-| `pattern` | string | yes | the regular expression (the description says Go/RE2 syntax; the engine is Rust's `regex`, whose syntax matches it for everyday use). Not trimmed — a leading space is part of the pattern. Empty: `missing required argument: pattern`; malformed: `invalid regular expression: <error>` |
+| `pattern` | string | yes | the regular expression, in Rust `regex` syntax (RE2-like: no backreferences or lookaround). Not trimmed — a leading space is part of the pattern. Empty: `missing required argument: pattern`; malformed: `invalid regular expression: <error>` |
 | `path` | string | no — the root | the directory to search, relative to the root |
 | `include` | string | no | a filename glob filter. Without `/` it matches the basename (`*.go`); with one, the root-relative path (`cmd/**`). Malformed: `invalid include pattern: <include>` |
 | `context` | integer | no — `0` | lines of context around each match, clamped to `0`–`10` |
@@ -484,9 +484,9 @@ whole thing.
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
 | `questions` | array of 1–4 question objects | yes | empty or missing: `choose: questions must be a non-empty array`; more than four: `choose: at most 4 questions per call`; an item that is not an object: `choose: questions[i] must be an object` |
-| `questions[].header` | string | yes | the tab label — the schema asks for "max ~12 chars"; anything over 16 characters is cut to 15 plus `…`, not rejected |
+| `questions[].header` | string | yes | the tab label, at most 16 characters; anything longer is cut to 15 plus `…`, not rejected |
 | `questions[].question` | string | yes | the complete question, one line. A blank header or question: `choose: questions[i] needs header and question` |
-| `questions[].options` | array of `{label, description?}` | yes | the choices; the schema asks for at least two, and the call needs at least one with a non-blank `label` (`choose: questions[i] needs at least one option with a label`); options without one are dropped |
+| `questions[].options` | array of `{label, description?}` | yes | the choices — a real choice has at least two (one yes/no question is `confirm`); the call needs at least one with a non-blank `label` (`choose: questions[i] needs at least one option with a label`); options without one are dropped |
 | `questions[].multiple` | boolean | no — `false` | allow several picks. The model is told it **must** set this whenever the wording invites more than one ("select all that apply") |
 | `questions[].allow_custom` | boolean | no — `true` | offer the "Other…" free-text answer |
 

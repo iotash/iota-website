@@ -5,11 +5,12 @@ description: What iota sends as the system message — the built-in harness ahea
 sidebar_label: The system prompt
 ---
 
-<!-- verbatim from iota src/agents/harness.rs @ e29e417 — update when it changes -->
+<!-- verbatim from iota src/agents/harness.rs and src/agents/skills.rs @ 93d04a5 — update when they change -->
 
 # The system prompt
 
-The system message a run sends is not your `system:` alone. As of v0.3.2, an
+The system message a run sends is not your `system:` alone. As of main after
+v0.3.1 (unreleased), an
 agent with `tools:` gets a short **harness** paragraph of iota's own ahead of
 it — who the model is running inside, what the machine looks like, and (with
 the `shell` set) how iota's own command line is driven — and an agent with
@@ -159,7 +160,7 @@ roots](./agent-mode.md#skills), the catalog closes the message: the
 instruction sentence, a blank line, then the block.
 
 ```text
-To use a skill, call the load_skill tool with the skill's name and follow the instructions it returns; read files the skill references by calling load_skill again with the "file" argument, and run its bundled scripts with the shell tool.
+To use a skill, call the load_skill tool with its name as the "skill" argument and follow the instructions it returns; read files the skill references by calling load_skill again with the "file" argument, and run its bundled scripts with the shell tool.
 
 <available_skills>
 <skill>
