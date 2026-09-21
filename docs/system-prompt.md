@@ -9,8 +9,7 @@ sidebar_label: The system prompt
 
 # The system prompt
 
-The system message a run sends is not your `system:` alone. As of main after
-v0.3.1 (unreleased), an
+The system message a run sends is not your `system:` alone. As of v0.3.2, an
 agent with `tools:` gets a short **harness** paragraph of iota's own ahead of
 it — who the model is running inside, what the machine looks like, and (with
 the `shell` set) how iota's own command line is driven — and an agent with

@@ -11,7 +11,7 @@ Every key the config file accepts, layer by layer: its type, its default, what
 it means, what it accepts, and what you are told when it is wrong. [The config
 file](./config-file.md) is the concept page — the three layers, how an agent
 reaches a model, the layered parameters; this is the lookup table. Facts are
-as of main after v0.3.1 (unreleased).
+as of v0.3.2.
 
 ## Files, lookup and merge
 
