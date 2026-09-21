@@ -117,18 +117,19 @@ behaviour exactly.
 
 ## First run
 
-iota runs agents, and an agent lives in the config file — so the first thing to
-do after installing is write one. `iota config init` does it for you:
+iota runs agents, and an agent lives in the config file — and a first run
+writes that file for you:
 
 ```bash
-iota config init          # writes ~/.iota.yaml with one provider, one model and agents.default
-export OPENAI_API_KEY=…   # or put `key:` in the file
-iota                      # runs agents.default
+export OPENAI_API_KEY=…   # or put `key:` in the file afterwards
+iota                      # writes ~/.iota.yaml (one provider, one model, agents.default) and runs it
 ```
 
-`iota config check` tells you whether the file says what you think it says, and
-`iota config path` which files a run actually reads. `init` refuses to
-overwrite an existing config.
+With no `.iota.yaml` in your home or the project, a run writes the starter
+config, says so on stderr, and goes on with it. `iota config check` tells you
+whether the file says what you think it says, and `iota config path` which
+files a run actually reads. `iota config init` writes the same starter without
+running anything, and refuses to overwrite an existing config.
 
 From there, [your first run](./quick-start.md) has the commands and the flags,
 and [the config file](./config-file.md) has the three layers you will edit.

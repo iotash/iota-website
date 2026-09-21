@@ -15,9 +15,8 @@ or a bare `iota` for the agent called `default`.
 
 ```bash
 brew install iotash/tap/iota
-iota config init          # writes ~/.iota.yaml with one provider, one model and agents.default
-export OPENAI_API_KEY=…   # or put `key:` in the file
-iota                      # runs agents.default
+export OPENAI_API_KEY=…   # or put `key:` in the file afterwards
+iota                      # a first run writes ~/.iota.yaml and runs agents.default
 ```
 
 <p className="overline">Start here</p>

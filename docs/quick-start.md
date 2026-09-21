@@ -7,13 +7,12 @@ sidebar_label: Your first run
 
 # Your first run
 
-An agent is what you run, and agents live in the config file — so a fresh
-install starts by writing one:
+An agent is what you run, and agents live in the config file — a fresh
+install's first run writes one and runs it:
 
 ```bash
-iota config init          # writes ~/.iota.yaml with one provider, one model and agents.default
-export OPENAI_API_KEY=…   # or put `key:` in the file
-iota                      # runs agents.default
+export OPENAI_API_KEY=…   # or put `key:` in the file afterwards
+iota                      # writes ~/.iota.yaml (one provider, one model, agents.default) and runs agents.default
 ```
 
 ## Usage

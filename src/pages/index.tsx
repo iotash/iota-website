@@ -36,7 +36,7 @@ const DOES = [
 ];
 
 const DOES_NOT = [
-  'run before you configure an agent — iota config init writes the first one',
+  'run without a config file — a first run writes the starter for you, and then it is yours',
   'run a daemon or a server, or leave anything running after you quit',
   'ask you to sign in, or phone home',
   'write outside the project root unless you say so',
