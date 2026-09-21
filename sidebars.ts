@@ -13,7 +13,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Configuration',
       collapsed: false,
-      items: ['config-file', 'image-generation'],
+      items: ['config-file', 'config-reference', 'system-prompt', 'image-generation'],
     },
     {
       type: 'category',
