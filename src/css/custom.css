@@ -613,3 +613,9 @@ a[rel='tag'][href*='/tags/fix']      { color: var(--ifm-color-info);    backgrou
 
 /* The blog sidebar is the release list. */
 .blog-wrapper aside nav > div:first-child { font-family: var(--iota-font-display); }
+
+/* The square app icon (static/img/iota-app-icon-square.*) gets its corners here, not in the
+   file: a source with its own radius shows two radii inside any frame that rounds it again. */
+.appIcon {
+  border-radius: 22%;
+}

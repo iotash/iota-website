@@ -105,7 +105,8 @@ Everything is outlined. No file contains a `<text>` element.
 | `favicon.svg` | 32 px form — squircle `rx=7`, white `ι›` on `#0D7680` |
 | `favicon-16.svg` | 16 px form — squircle `rx=4`, white `ι` alone |
 | `favicon-16/32/48/128/180.png` | Rasters; 16 is the chevron-less form, the rest keep it |
-| `iota-app-icon.svg` / `.png` | 512 / 1024 px squircle app icon, white `ι›` on `#0D7680` |
+| `iota-app-icon.svg` / `.png` | 512 / 1024 px squircle app icon, white `ι›` on `#0D7680` — for places that show it as-is (a README, an OAuth consent page) |
+| `iota-app-icon-square.svg` / `.png` | the same icon with no corner radius — for places that round it themselves (the GitHub organization avatar, an app store, an `<img>` under `.appIcon`); a rounded source in a rounded frame gets two radii |
 | `superseded-c/` | The whole first-round C asset set, kept for reference, referenced by nothing |
 
 Note on rendering: Pencil's own `Export` returns PNGs at ~52 % alpha and has no SVG format at all
