@@ -14,7 +14,7 @@ overlay, no skills, no project-scoped sessions.
 ```yaml
 agents:
   claude:
-    models: ["anthropic:claude-sonnet-4-20250514"]
+    model: "anthropic:claude-sonnet-4-20250514"
     workspace: true
 ```
 

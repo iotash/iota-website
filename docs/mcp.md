@@ -55,7 +55,7 @@ those servers, `[]` loads none, and leaving the key out loads all of them:
 ```yaml
 agents:
   default:
-    models: [gpt5]
+    model: gpt5
     mcp_servers: [github]    # load only these MCP servers; [] = none; key absent = all
 ```
 

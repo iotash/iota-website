@@ -19,13 +19,13 @@ in interactive sessions — disable with `ask: false`).
 ```yaml
 agents:
   claude:
-    models: ["anthropic:claude-sonnet-4-20250514"]
+    model: "anthropic:claude-sonnet-4-20250514"
     tools:
       shell:                 # empty → sandboxed, network blocked
       code:
 
   coder:
-    models: ["openai:gpt-4o"]
+    model: "openai:gpt-4o"
     tools:
       shell:
         network: true        # allow network inside the sandbox

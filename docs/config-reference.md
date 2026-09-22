@@ -83,7 +83,7 @@ models:
 
 agents:
   default:
-    models: [gpt]             # the candidate set, best first; -M and /model pick from it
+    model: gpt                # the model the run starts on; choices: (absent here) is what -M and /model offer
     # Your own instructions. iota already tells the model what it runs inside and where (the
     # built-in harness prompt: identity, environment, and its own command line when `shell` is on).
     system: "You are a careful coding assistant."
@@ -116,7 +116,7 @@ entry. A name is any YAML string, and it is what the other layers refer to.
 |---|---|---|
 | `providers:` | endpoints — how to reach an API and how to authenticate | [`providers.<name>`](#providersname) |
 | `models:` | configured models — which provider serves a model id, and the properties of the model itself | [`models.<name>`](#modelsname) |
-| `agents:` | usages — what a run names: a candidate set, a prompt, tools, MCP servers, session switches | [`agents.<name>`](#agentsname) |
+| `agents:` | usages — what a run names: a model and its choices, a prompt, tools, MCP servers, session switches | [`agents.<name>`](#agentsname) |
 | `mcp_servers:` | the MCP servers an agent may select | [`mcp_servers.<name>`](#mcp_serversname) |
 
 Any other top-level key fails the load:
@@ -183,8 +183,8 @@ models:
 
 The shorthand must name a provider **and** a model: a bare name has no
 endpoint (`models.x: "sonnet" names no provider (want "provider:model")`), and
-`provider:*` is a candidate set, which only an agent can hold (`models.x:
-"openai:*" is a candidate set, not a model (use it in `agents.<name>.models`)`).
+`provider:*` is a choice list, which only an agent can hold (`models.x:
+"openai:*" is a candidate set, not a model (use it in `agents.<name>.choices`)`).
 Everything after the **first** colon is the id, so a relay's `vendor/model`
 shape survives (`openrouter:anthropic/claude-3.5-sonnet`).
 
@@ -218,7 +218,8 @@ must have at least one model; everything else is optional.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `models` | a model reference, or a list of them | — (**required**: `agents.a: models: at least one model is required`) | the candidate set, best first. Each item is one of three forms: a `models:` entry name (`sonnet`); an inline `provider:id` (`anthropic:claude-sonnet-4`, everything after the first colon being the id); or a wildcard `provider:*`, every model that provider lists, fetched when the picker opens. The **first** item is the model the run starts on; a wildcard first starts in the picker instead. `models: sonnet` and `models: [sonnet]` are the same. Errors: `models: unknown model "sonet"` for an entry name nothing declares, `models: unknown provider "opnai"` for an inline or wildcard on a provider that is neither configured nor built in — and `- anthropic: claude-x` (a space after the colon, which YAML reads as a mapping) gets `a model reference must be a string like "provider:model", but `anthropic: claude-x` parses as a YAML mapping — remove the space after the colon (`anthropic:claude-x`)` |
+| `model` | a model reference | unset — the run starts in the `/model` picker | the model the run starts on: a `models:` entry name (`sonnet`) or an inline `provider:id` (`anthropic:claude-sonnet-4`). Never a wildcard: `agents.a.model: "openai:*" is a wildcard — put it in choices: and leave model: unset to start in the picker`. Outside `choices` it is a warning, not a refusal. `-M` replaces it for one run; a headless run with neither is refused (`no model chosen: set agents.<name>.model or pass -M`) |
+| `choices` | a model reference, or a list of them | every `models:` entry, in declaration order | what `/model` and `-M` offer. Each item is one of three forms: a `models:` entry name (`sonnet`); an inline `provider:id` (`anthropic:claude-sonnet-4`, everything after the first colon being the id); or a wildcard `provider:*`, every model that provider lists, fetched when the picker opens. `choices: sonnet` and `choices: [sonnet]` are the same; the order is the picker's. Errors: `choices: unknown model "sonet"` for an entry name nothing declares, `choices: unknown provider "opnai"` for an inline or wildcard on a provider that is neither configured nor built in — and `- anthropic: claude-x` (a space after the colon, which YAML reads as a mapping) gets `a model reference must be a string like "provider:model", but `anthropic: claude-x` parses as a YAML mapping — remove the space after the colon (`anthropic:claude-x`)` |
 | `system` | string | `""` | the system prompt, inline. Wins over `system_file` when both are set; `-s` replaces either for one run. What iota puts around it is on [The system prompt](./system-prompt.md) |
 | `system_file` | string | `""` | a file holding the system prompt, read when the run starts; `${…}` [expanded](#variable-expansion) at merge time (`${appHome}/prompts/reviewer.md`). A file that cannot be read fails the run rather than sending an empty prompt: `system_file: open /path: No such file or directory (os error 2)` |
 | `tools` | mapping | none | the [built-in toolsets](./builtin-toolsets.md) this agent gets. The **presence of a key** enables the set; its value is the set's configuration (nothing or `{}` = defaults), and any YAML-1.1 false spelling (`false`, `no`, `off`) disables it — the way to switch off `ask`, which is on by default interactively. The four names are `shell`, `code`, `skills`, `ask`; anything else fails the load (`agents.a.tools.web: unknown toolset (want shell, skills, code, ask)`), and the two retired names say what replaced them: `agent` → `the `agent` toolset is now called `skills` (the word `agent` names a config layer)`, `delegate` → `the `delegate` toolset was removed — run child agents from bash instead (see README)`. A set whose value does not decode is a startup warning (`toolset "shell": … (ignored)`), not an error. Naming at least one set here is also what makes iota send its [harness prompt](./system-prompt.md) |
@@ -318,7 +319,8 @@ file. In order of precedence:
 | Case | Example | Message |
 |---|---|---|
 | unknown top-level key | `agnets:` | `agnets: unknown top-level key (want providers:, models:, agents:, mcp_servers:)` |
-| a retired key | `providers.p.model` | `providers.p.model: `model` is now a `models:` entry — write `models.<name>: <provider>:<id>` and list it in `agents.<name>.models`` |
+| a retired key | `providers.p.model` | `providers.p.model: `model` is now a `models:` entry — write `models.<name>: <provider>:<id>` and name it in `agents.<name>.model` (or list it in `choices:`)` |
+| | `agents.a.models` | `agents.a.models: `models` is now `choices:` (what /model and -M pick from) plus `model:` (the one the run starts on)` |
 | | `providers.p.agent` | `providers.p.agent: `agent` is now `workspace:` on an `agents:` entry` |
 | a key of another layer | `providers.p.system` | `providers.p.system: `system` belongs under `agents:` (see README, "The three layers")` |
 | | `agents.a.url` | `agents.a.url: `url` belongs under `providers:` (see README, "The three layers")` |

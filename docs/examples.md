@@ -56,7 +56,7 @@ iota run seedream -m "A red bicycle leaning on a stone wall, golden hour"
 
 # What is configured, and what is saved
 iota list                     # agents (the default listing)
-iota list models reviewer     # that agent's candidate set, best first
+iota list models reviewer     # that agent's model and choices
 iota list providers           # endpoints, and where each key comes from
 iota list sessions            # saved sessions, newest first
 

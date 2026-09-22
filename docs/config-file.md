@@ -34,7 +34,7 @@ The config has three top-level maps, each answering one question:
 |-----|---------|------|
 | `providers:` | *how do I reach the API?* | `type`, `key`, `url` |
 | `models:` | *which model, and what does its protocol look like?* | `provider`, `id`, `context_window`, `defer_mode`, image knobs, `effort`/`temperature`/`top_p` defaults |
-| `agents:` | *how do I use it?* | `models`, `system`/`system_file`, `tools`, `mcp_servers`, `workspace`, `no_save`, `notify`, `description`, and overrides for `context_window`/`effort`/`temperature`/`top_p` |
+| `agents:` | *how do I use it?* | `model`, `choices`, `system`/`system_file`, `tools`, `mcp_servers`, `workspace`, `no_save`, `notify`, `description`, and overrides for `context_window`/`effort`/`temperature`/`top_p` |
 
 **A run names an agent.** `iota run <name>` resolves `agents:` and nothing
 else: the agent decides which model it drives, and the model decides which
@@ -54,7 +54,7 @@ point.
 
 ## Referring to a model
 
-Wherever a model is named — `agents.<name>.models`, a `models:` shorthand,
+Wherever a model is named — `agents.<name>.model`, `agents.<name>.choices`, a `models:` shorthand,
 `-M` — three forms are accepted:
 
 | Form | Means |
@@ -98,7 +98,8 @@ models:                      # configured models: provider + id + protocol + def
 
 agents:                      # usage: how a model is driven
   default:
-    models: [gpt5, sonnet, "deepseek:*"]   # candidate set, best first; the FIRST one is the default
+    model: gpt5              # the model the run starts on; absent = start in the picker
+    choices: [gpt5, sonnet, "deepseek:*"]   # what /model and -M offer; absent = every models: entry
     system: "You are a helpful coding assistant"
     tools:
       code:
@@ -107,14 +108,14 @@ agents:                      # usage: how a model is driven
     workspace: true          # project overlay (AGENTS.md) + skills + project-scoped sessions
 
   reviewer:
-    models: [sonnet]
+    model: sonnet
     system_file: ${appHome}/prompts/reviewer.md  # prompt from a file (inline `system` wins)
     description: Reads a diff and reports what is wrong with it   # documentation of the entry
     effort: high             # overrides the model's default (one level, no deeper)
     context_window: 200k     # …as may the window, for an agent that knows how long its chats run
 
   scratch:
-    models: ["openai:*"]     # a wildcard first entry starts in the model picker
+    choices: ["openai:*"]    # no model: — the run starts in the picker, over what openai lists
     no_save: true            # start ephemeral (like --no-save); an explicit `iota resume` outranks it
     notify: false            # no desktop notification while the terminal is unfocused (default: on)
 ```
@@ -122,14 +123,14 @@ agents:                      # usage: how a model is driven
 With this config:
 
 ```bash
-# The agent named "default": its first model (gpt5 → openai/gpt-5.2), prompt, tools and MCP subset
+# The agent named "default": its model (gpt5 → openai/gpt-5.2), prompt, tools and MCP subset
 iota                              # …and with no argument at all, that is what runs
 iota run default -m "hello"
 
-# Another agent: its own models, prompt, tools and MCP subset
+# Another agent: its own model, prompt, tools and MCP subset
 iota run reviewer -m "what is wrong with this diff?"
 
-# -M picks another model from the candidate set (a warning if it is outside it — the set is advice)
+# -M picks another model, usually from the choices (outside them is a warning — choices are advice)
 iota run default -M sonnet -m "hi"
 
 # -M also takes provider:id, which moves the run to that endpoint
@@ -155,11 +156,11 @@ It is composed at send time, never stored, under 1.5 KB, with no configuration
 key; an agent without `tools:` sends nothing extra. The structure and the full
 text are on [The system prompt](./system-prompt.md).
 
-## The candidate set is what `/model` offers
+## The choices are what `/model` offers
 
-`agents.<name>.models` is also the row list of the [`/model`](./slash-commands.md)
-picker. Entries and inline `provider:id`s are rows on the spot; every
-`provider:*` in the set is a listing request, and **several of them go out at
+`agents.<name>.choices` is the row list of the [`/model`](./slash-commands.md)
+picker — every `models:` entry when the key is absent. Entries and inline
+`provider:id`s are rows on the spot; every `provider:*` in the list is a listing request, and **several of them go out at
 once** — the wait is the slowest endpoint, not the sum of them, and Esc cancels
 all of them together.
 
@@ -221,7 +222,7 @@ models:
   deepseek: deepseek:deepseek-chat
 agents:
   deepseek:
-    models: [deepseek]
+    model: deepseek
     system: "You are terse"
     tools: {code: {}}
     workspace: true

@@ -27,7 +27,7 @@ iota [command] [flags]
 | `iota run <agent>` | Run that `agents:` entry, interactively |
 | `iota run <agent> -m "…"` | One headless turn: message in, reply out |
 | `iota run` | The same as a bare `iota` |
-| `iota list [agents\|models\|providers\|sessions]` | What the config declares (no argument: `agents`); `iota list models <agent>` shows one agent's candidate set |
+| `iota list [agents\|models\|providers\|sessions]` | What the config declares (no argument: `agents`); `iota list models <agent>` shows one agent's model and choices |
 | `iota resume [<id>]` | Resume a saved session — any unique id prefix; with no id, pick from a list |
 | `iota config [check\|path\|init]` | Validate the config, print which files it reads, or write a starter one (no argument: `check`) |
 | `iota version` | Print the version (`--version` does the same) |
