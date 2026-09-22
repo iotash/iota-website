@@ -97,7 +97,7 @@ it.
 | `command` | string | yes | the command line, in the dialect of the interpreter that will run it (the description tells the model which). Empty: `missing required argument: command` |
 | `cwd` | string | no — the project root | the working directory. A relative path is resolved against the project root; an absolute one is accepted as written, outside the root included — there is no jail, and a directory that does not exist surfaces as the spawn error |
 | `timeout` | integer | no — `600` | the wall-clock cap in seconds, `1`–`3600`. Outside that range — a non-number reads as `0` — the call is refused and nothing runs: `timeout must be between 1 and 3600 seconds`. One number cannot serve both a lint and a child agent's whole run, so the model picks, inside a ceiling it cannot argue with |
-| `background` | boolean | no — `false` | start the command and return at once with a job id (see [Background jobs](#background-jobs)) |
+| `background` | boolean | no — `false` | do not wait at all: start the command and return at once with a job id — for servers, watchers, a child agent. A foreground call waits 20 s and then yields on its own (see [Background jobs](#background-jobs)), so the flag is for what should never be waited on |
 
 **Approval**: with `auto_run: true`, never. Otherwise every call of an
 unsandboxed set (no sandbox on the machine, or `sandbox: off`), and in a
@@ -216,8 +216,31 @@ optional.
 
 ### Background jobs
 
-`"background": true` starts the command and returns at once with a job id,
-its pid and an output file:
+A foreground call returns when the command exits **or after 20 seconds**,
+whichever comes first. A command still running at 20 s continues as a
+background job: the call returns with the job id and the output so far, the
+model goes on with its turn, and the job's exit status and output come back
+later as a notice. The model never has to guess how long a command takes —
+the one thing it must not do is poll:
+
+```text
+Still running after 20s as background job b3 (pid 4242). Output so far:
+   Compiling iota v0.4.0
+A notice with its exit status and output arrives when it finishes; do not poll (`tail -f /tmp/iota-jobs/931/b3.log` only if you need progress).
+```
+
+In the transcript the call settles as a classic block with that receipt —
+`⎿ still running after 20s → background job b3` and the output it had — or, in
+a folded group, the summary line names it: `◇ ran 3 tools in 20s · job b3
+running` (`· 3 jobs running` for several). The time is the group's, up to the
+yield; the job's own time is in its notice. While anything runs, the status
+row ends with `· job b3 cargo test 1m12s` (`· 3 jobs 3m01s` for several) and
+[`/jobs`](./slash-commands.md) lists every job — id, elapsed, command, output
+file; the command exists only while a job is running.
+
+`"background": true` skips the 20 s: the command starts and the call returns
+at once with a job id, its pid and an output file — for servers, watchers and
+child agents, which should not be waited on at all:
 
 ```text
 Started background job b1 (pid 4242). Output: /tmp/iota-jobs/931/b1.log
@@ -245,9 +268,10 @@ working. In `-m` runs the run does not end while a job is still going: the
 loop waits for it, hands the model the notice and gives it another round —
 each one counted against `--max-turns`.
 
-Up to **16** jobs at a time — past that the call is refused with `too many
-background jobs running (16); wait for one to finish` — `timeout` applies the
-same way, and the approval rules are unchanged. The log file is left on disk,
+Up to **16** jobs at a time — past that a `background: true` call is refused
+with `too many background jobs running (16); wait for one to finish`, and a
+foreground call does not yield but is waited for to the end, its result saying
+so — `timeout` applies the same way, and the approval rules are unchanged. The log file is left on disk,
 uncapped, so `tail` still shows everything. **Background jobs are killed when
 iota exits** — `/quit`, Ctrl+C at the prompt, or the end of a `-m` run — so a
 resumed session never inherits one; a job that must survive that has to detach
