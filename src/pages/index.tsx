@@ -211,7 +211,7 @@ export default function Home(): React.ReactElement {
           {/* The platform fact is the one place the homepage names Windows; the
               PowerShell line itself is a tab in the box above (design/DESIGN.md §7). */}
           <p className={styles.facts}>
-            v0.3.2&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
+            v0.4.0&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
             <Link className={styles.factLink} to="/docs/install">
               Windows
             </Link>
