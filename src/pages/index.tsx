@@ -5,6 +5,7 @@ import {PageMetadata} from '@docusaurus/theme-common';
 import Wordmark from '@site/src/components/Wordmark';
 import {Check, Copy, Minus} from '@site/src/components/Icons';
 import styles from './index.module.css';
+import {PICTURE} from '@site/src/data/picture';
 
 // The homepage is deliberately outside the theme's Layout: it has its own
 // 56 px top bar and footer and shows neither the docs navbar nor the site
@@ -124,58 +125,89 @@ function InstallBox() {
 }
 
 function Terminal() {
+  const L = styles.termLine;
   return (
     <div className={styles.terminal}>
       <div className={styles.termTitle}>
+        <span>iota run coder</span>
         <span>~/work/iota</span>
-        <span>claude-sonnet-4</span>
       </div>
       <div className={styles.termBody}>
-        <div className={styles.termLine}>
-          <span className={styles.dim}>$ </span>iota run coder
-        </div>
-        <div className={styles.termLine}>
-          <span className={styles.green}>✓ </span>
-          <span className={styles.dim}>AGENTS.md · 3 skills · 2 mcp servers · sandbox on</span>
-        </div>
-        <div className={styles.termGap} />
-        <div className={styles.termLine}>
-          <span className={styles.caretMark}>› </span>why does the resume test hang on linux?
-        </div>
-        <div className={styles.termGap} />
-        <div className={styles.termLine}>
-          <span className={styles.amber}>⏺ </span>
-          <span className={styles.amberBold}>bash</span>
-          <span className={styles.dim}>{'  cargo test --test session resume'}</span>
-        </div>
-        <div className={styles.termLine}>
-          <span className={styles.faint}>{'  └ '}</span>
-          <span className={styles.dim}>hung after 60s · exit 101</span>
-        </div>
-        <div className={styles.termGap} />
-        <div className={styles.termLine}>The child keeps the write end of the pipe open.</div>
-        <div className={styles.termLine}>
-          <span className={styles.teal}>session::writer</span> drops its handle only after the
-        </div>
-        <div className={styles.termLine}>
-          bundle flushes, so <span className={styles.teal}>read_to_end</span> never returns.
+        {/* Every shape below is what the binary prints (captured from a run against a scripted
+            provider, 2026-09-22): the banner card, the user's row in reverse video, the call row
+            in cyan, the receipt in dim, the table's dim rules, the 2-D math, the image caption. */}
+        <div className={styles.termCard}>
+          <div className={L}>
+            <span className={styles.teal}>ι&gt; iota</span>
+            <span className={styles.dim}>{'  v0.4.0'}</span>
+          </div>
+          <div className={L}>agent<span className={styles.dim}> · </span>session 8g6h55dk3wsz</div>
+          <div className={L}>~/work/iota</div>
         </div>
         <div className={styles.termGapSm} />
-        <pre className={styles.termCode}>
-          <span>let (rx, tx) = pipe()?;</span>
-          <span className={styles.green}>drop(tx);{'  '}// ← before the await</span>
-        </pre>
-        <div className={styles.termGap} />
-        <div className={styles.termLine}>
-          <span className={styles.caretMark}>› </span>
-          <span className={styles.caret} />
+        <div className={`${L} ${styles.userRow}`}>❯ why does the resume test hang on linux?</div>
+        <div className={`${L} ${styles.teal}`}>[shell cargo test --test session resume 2&gt;&amp;1 | tail -3]</div>
+        <div className={`${L} ${styles.dim}`}>{'  ⎿ test resume::linked_worktree ... hung after 60s'}</div>
+        <div className={`${L} ${styles.dim}`}>{'    error: test failed, exit 101'}</div>
+        <div className={L}>The hang is in the session writer, not the test.</div>
+        <div className={L}>
+          <span className={styles.teal}>session::writer</span> keeps the pipe&apos;s write end open until the
         </div>
-      </div>
-      <div className={styles.termStatus}>
-        <span className={styles.teal}>⠹ thinking</span>
-        <span>24.3k / 200k</span>
+        <div className={L}>
+          bundle flushes, so <span className={styles.teal}>read_to_end</span> never sees EOF:
+        </div>
+        <pre className={styles.termCode}>
+          <span>{'  '}<span className={styles.kw}>let</span> (rx, tx) = pipe()?;</span>
+          <span>{'  '}drop(tx);            <span className={styles.dim}>// before the await, not after</span></span>
+          <span>{'  '}<span className={styles.kw}>let</span> n = read_to_end(rx).<span className={styles.kw}>await</span>?;</span>
+        </pre>
+        <table className={styles.termTable}>
+          <thead>
+            <tr><th>Where</th><th>What it holds</th><th>Fix</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>writer.rs:88</td><td>the write end</td><td>drop before awaiting</td></tr>
+            <tr><td>resume.rs:41</td><td>a clone of it</td><td>take by value</td></tr>
+          </tbody>
+        </table>
+        <div className={L}>The timeout is the retry back-off summing to a minute:</div>
+        <div className={L}>{'        5   k'}</div>
+        <div className={L}>{'  T =   ∑  2  ⋅ 1s = 63s'}</div>
+        <div className={L}>{'      k = 0'}</div>
+        <div className={L}>
+          so the 60 s budget is exceeded by one retry, <span className={styles.teal}>2⁵ = 32</span> s of it.
+        </div>
+        <div className={styles.termGapSm} />
+        <div className={`${L} ${styles.userRow}`}>❯ paint the evening this fix ships: dusk over two hills</div>
+        <TermPicture />
+        <div className={`${L} ${styles.dim}`}>{'  🖼 saved: /home/me/.iota/images/20260922-183012-1.png'}</div>
+        <div className={styles.termGapSm} />
+        <div className={styles.termComposer}>
+          <div className={L}>
+            ❯ <span className={styles.caret} />
+          </div>
+        </div>
+        <div className={`${L} ${styles.dim}`}>{'  claude-sonnet-4 · ↑ 4k ↓ 253 · 1% / 200k'}</div>
       </div>
     </div>
+  );
+}
+
+/** The picture the image turn draws: iota paints an image in upper half-blocks — one cell per
+ *  pixel column, two pixel rows per cell, the top one the glyph's colour and the bottom one its
+ *  background (src/imgterm.rs) — and that is what this is, cell for cell. */
+function TermPicture() {
+  return (
+    <>
+      {PICTURE.map((row, r) => (
+        <div className={styles.termPixels} key={r}>
+          {'  '}
+          {row.map(([fg, bg], c) => (
+            <span key={c} style={{color: fg, backgroundColor: bg}}>▀</span>
+          ))}
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -219,7 +251,7 @@ export default function Home(): React.ReactElement {
 
           <Terminal />
           <p className={styles.caption}>
-            An actual session — agent mode, one bash call, one answer. No cuts.
+            The shapes are the real ones: a shell call and its receipt, a table, display math laid out in two dimensions, a picture drawn inline.
           </p>
 
           <h2 className={styles.sectionMark}># what it does</h2>

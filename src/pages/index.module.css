@@ -226,6 +226,62 @@
 .amber { color: var(--iota-term-amber); }
 .amberBold { color: var(--iota-term-amber); font-weight: 700; }
 .caretMark { color: var(--iota-term-teal); font-weight: 700; }
+.kw    { color: var(--iota-term-amber); }
+
+/* The user's row is reverse video in the real transcript. */
+.userRow {
+  display: block;
+  color: var(--iota-term-bg);
+  background-color: var(--iota-term-text);
+}
+
+/* Half-block rows tile only at a line-height of one em. */
+.termPixels {
+  white-space: pre;
+  line-height: 1;
+  font-size: 13px;
+}
+
+/* The banner card, the table rules and the composer rules are box-drawing glyphs in the
+   terminal; at a web line-height the glyphs would not join, so they are borders here. */
+.termCard {
+  display: inline-block;
+  min-width: 46ch;
+  margin-bottom: 4px;
+  padding: 2px 10px;
+  border: 1px solid var(--iota-term-dim);
+  border-radius: 8px;
+}
+.termTable {
+  margin: 4px 0 6px;
+  border-collapse: collapse;
+  font-size: inherit;
+  line-height: 1.5;
+}
+.termTable th,
+.termTable td {
+  padding: 3px 10px;
+  border: 1px solid var(--iota-term-faint);
+  font-weight: 400;
+  text-align: left;
+  white-space: pre;
+}
+.termTable thead,
+.termTable thead th,
+.termTable tbody tr,
+.termTable tbody tr:nth-child(2n) {
+  background: transparent;
+  border-top: 0;
+  border-bottom: 0;
+  color: var(--iota-term-text);
+}
+.termTable thead th, .termTable tbody td { border: 1px solid var(--iota-term-faint); }
+.termComposer {
+  margin-top: 8px;
+  padding: 2px 0;
+  border-top: 1px dashed var(--iota-term-faint);
+  border-bottom: 1px dashed var(--iota-term-faint);
+}
 
 .caret {
   display: inline-block;
