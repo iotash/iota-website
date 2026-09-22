@@ -235,7 +235,12 @@
   background-color: var(--iota-term-text);
 }
 
-/* Half-block rows tile only at a line-height of one em. */
+/* Half-block rows tile only at a line-height of one em — and at that height the glyph's box
+   overhangs its line, so the block keeps a margin clear of the rows around it. */
+.termPicture {
+  margin: 10px 0 6px;
+  line-height: 1;
+}
 .termPixels {
   white-space: pre;
   line-height: 1;

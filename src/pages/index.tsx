@@ -198,7 +198,7 @@ function Terminal() {
  *  background (src/imgterm.rs) — and that is what this is, cell for cell. */
 function TermPicture() {
   return (
-    <>
+    <div className={styles.termPicture}>
       {PICTURE.map((row, r) => (
         <div className={styles.termPixels} key={r}>
           {'  '}
@@ -207,7 +207,7 @@ function TermPicture() {
           ))}
         </div>
       ))}
-    </>
+    </div>
   );
 }
 
