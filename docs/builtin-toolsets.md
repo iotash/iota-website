@@ -235,8 +235,9 @@ a folded group, the summary line names it: `◇ ran 3 tools in 20s · job b3
 running` (`· 3 jobs running` for several). The time is the group's, up to the
 yield; the job's own time is in its notice. While anything runs, the status
 row ends with `· job b3 cargo test 1m12s` (`· 3 jobs 3m01s` for several) and
-[`/jobs`](./slash-commands.md) lists every job — id, elapsed, command, output
-file; the command exists only while a job is running.
+[`/jobs`](./slash-commands.md) lists every job — id, elapsed, command — and
+picking one shows its full command, its clock, its pid, its output file and
+the last lines of its output; the command exists only while a job is running.
 
 `"background": true` skips the 20 s: the command starts and the call returns
 at once with a job id, its pid and an output file — for servers, watchers and
@@ -261,7 +262,9 @@ When the job ends, its result enters the conversation on its own as a
 ```
 
 The status is `exit N after <elapsed>`, `timed out after <elapsed>`, or
-`killed`. If you are sitting at the prompt, the notice wakes the model for one
+`killed`. The command after it is the label the call's `[shell …]` header
+showed — one line, cut past 64 characters — the same rule the `/jobs` rows
+and the status row's job segment follow; the full text is in `/jobs`. If you are sitting at the prompt, the notice wakes the model for one
 turn (your half-typed draft is untouched). If a turn is already running, it
 lands at the next round boundary, like a message you typed while the model was
 working. In `-m` runs the run does not end while a job is still going: the
