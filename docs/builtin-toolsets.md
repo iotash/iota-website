@@ -96,7 +96,7 @@ it.
 |---|---|---|---|
 | `command` | string | yes | the command line, in the dialect of the interpreter that will run it (the description tells the model which). Empty: `missing required argument: command` |
 | `cwd` | string | no — the project root | the working directory. A relative path is resolved against the project root; an absolute one is accepted as written, outside the root included — there is no jail, and a directory that does not exist surfaces as the spawn error |
-| `timeout` | integer | no — `600` | the wall-clock cap in seconds, `1`–`3600`. Outside that range — a non-number reads as `0` — the call is refused and nothing runs: `timeout must be between 1 and 3600 seconds`. One number cannot serve both a lint and a child agent's whole run, so the model picks, inside a ceiling it cannot argue with |
+| `timeout` | integer | no — none | kill the command after this many seconds. Left out, the command runs until it exits — a job outlives the call, never iota. Any positive number; `0`, a negative or a non-number is refused before anything runs: `timeout must be a positive number of seconds` |
 | `background` | boolean | no — `false` | do not wait at all: start the command and return at once with a job id — for servers, watchers, a child agent. A foreground call waits 20 s and then yields on its own (see [Background jobs](#background-jobs)), so the flag is for what should never be waited on |
 
 **Approval**: with `auto_run: true`, never. Otherwise every call of an
@@ -235,9 +235,11 @@ a folded group, the summary line names it: `◇ ran 3 tools in 20s · job b3
 running` (`· 3 jobs running` for several). The time is the group's, up to the
 yield; the job's own time is in its notice. While anything runs, the status
 row ends with `· job b3 cargo test 1m12s` (`· 3 jobs 3m01s` for several) and
-[`/jobs`](./slash-commands.md) lists every job — id, elapsed, command — and
-picking one shows its full command, its clock, its pid, its output file and
-the last lines of its output; the command exists only while a job is running.
+[`/jobs`](./slash-commands.md) lists every job — id, elapsed, command — live,
+the clocks walking and a finished job leaving the list; picking one shows its
+full command, its clock, its pid, its output file and the last lines of its
+output, and a **Kill** tab ends the jobs you tick. The command exists only
+while a job is running.
 
 `"background": true` skips the 20 s: the command starts and the call returns
 at once with a job id, its pid and an output file — for servers, watchers and
@@ -274,7 +276,8 @@ each one counted against `--max-turns`.
 Up to **16** jobs at a time — past that a `background: true` call is refused
 with `too many background jobs running (16); wait for one to finish`, and a
 foreground call does not yield but is waited for to the end, its result saying
-so — `timeout` applies the same way, and the approval rules are unchanged. The log file is left on disk,
+so — a `timeout` the call named still applies, and the approval rules are
+unchanged. The log file is left on disk,
 uncapped, so `tail` still shows everything. **Background jobs are killed when
 iota exits** — `/quit`, Ctrl+C at the prompt, or the end of a `-m` run — so a
 resumed session never inherits one; a job that must survive that has to detach
