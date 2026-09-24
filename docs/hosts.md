@@ -14,6 +14,12 @@ elsewhere. Nothing here is configured: the host is recognised from the
 environment it injects, and a plain terminal gets the plain-terminal treatment.
 The one knob is `notify` on the agent, which gates the attention ping only.
 
+A [background job](./builtin-toolsets.md#background-jobs) counts as work: while
+one runs, a chat that is otherwise waiting for you is still reported as
+working — its result will bring another reply, so the host is not told the
+chat is done until then. An approval pending while a job runs is still
+reported as needing you.
+
 The traffic runs one way except for a single line: the host is *told* the
 state, the session and the exit; the model is told, in the
 [`<environment>` block](./system-prompt.md#the-hosts-lines), which host that is
@@ -27,7 +33,7 @@ speaks through two escape sequences most modern terminals understand:
 
 | State | Sequence | What the terminal shows |
 |---|---|---|
-| a turn is running | OSC 9;4 with state 3 | an indeterminate progress indicator on the tab |
+| a turn is running, or a background job | OSC 9;4 with state 3 | an indeterminate progress indicator on the tab |
 | the model needs you (an approval, a question) | OSC 9;4 with state 4 at 100 | a warning-coloured, full bar |
 | the last turn failed | OSC 9;4 with state 2 at 100 | an error-coloured, full bar |
 | your move | OSC 9;4 with state 0 | nothing |
@@ -56,7 +62,7 @@ so the pane shows `iota` before you type anything. In herdr's own terms:
 
 | The chat | The pane's lifecycle |
 |---|---|
-| a turn is running | `working` |
+| a turn is running, or a background job | `working` |
 | the model needs you — an approval banner, an `ask` question | `blocked` |
 | your move — from the moment the chat is ready for input, and after a failed turn too | `idle` |
 | exits | released — herdr goes back to screen recognition for whatever runs next |
@@ -89,7 +95,7 @@ indicator:
 
 | The chat | The status row |
 |---|---|
-| a turn is running | `Running`, blue, and the workspace loading indicator on |
+| a turn is running, or a background job | `Running`, blue, and the workspace loading indicator on |
 | the model needs you | `Needs input`, a bell icon, the indicator off |
 | the last turn failed | `Failed`, red |
 | your move | `Idle`, grey |
