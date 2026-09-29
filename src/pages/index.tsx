@@ -139,7 +139,7 @@ function Terminal() {
         <div className={styles.termCard}>
           <div className={L}>
             <span className={styles.teal}>ι&gt; iota</span>
-            <span className={styles.dim}>{'  v0.4.0'}</span>
+            <span className={styles.dim}>{'  v0.5.2'}</span>
           </div>
           <div className={L}>agent<span className={styles.dim}> · </span>session 8g6h55dk3wsz</div>
           <div className={L}>~/work/iota</div>
@@ -243,7 +243,7 @@ export default function Home(): React.ReactElement {
           {/* The platform fact is the one place the homepage names Windows; the
               PowerShell line itself is a tab in the box above (design/DESIGN.md §7). */}
           <p className={styles.facts}>
-            v0.4.0&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
+            v0.5.2&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
             <Link className={styles.factLink} to="/docs/install">
               Windows
             </Link>
