@@ -11,7 +11,7 @@ Every key the config file accepts, layer by layer: its type, its default, what
 it means, what it accepts, and what you are told when it is wrong. [The config
 file](./config-file.md) is the concept page — the three layers, how an agent
 reaches a model, the layered parameters; this is the lookup table. Facts are
-as of v0.5.2.
+as of v0.6.0.
 
 ## Files, lookup and merge
 
@@ -83,14 +83,25 @@ models:
 
 agents:
   default:
-    model: gpt                # the model the run starts on; choices: (absent here) is what -M and /model offer
+    model: gpt                # the model a run starts on; leave it out to start in the picker
+    # choices: [gpt]          # what /model and -M pick from; absent = every `models:` entry
     # Your own instructions. iota already tells the model what it runs inside and where (the
     # built-in harness prompt: identity, environment, and its own command line when `shell` is on).
     system: "You are a careful coding assistant."
     tools:
       code:                   # read/write/edit/grep over the project
       shell:                  # shell commands, with a sandbox by default
-    # workspace: true         # AGENTS.md overlay, skills, project-scoped sessions
+    # mode: agent             # AGENTS.md overlay, skills, project-scoped sessions
+  # A bot (`iota run coder`): one conversation that never ends, with a memory of its own. By default it
+  # stops at every approval gate and waits for you; the two `auto_` keys below are what let it carry on
+  # unattended. They are an opt-in, and only sensible with the sandbox on — where no sandbox is available,
+  # `auto_run` runs every command unconfined without asking.
+  # coder:
+  #   mode: bot
+  #   model: gpt
+  #   tools:
+  #     code: { auto_write: true }                  # writes and edits land without a yes
+  #     shell: { sandbox: auto, auto_run: true }    # commands run confined, none waits for a yes
 
 # MCP servers go under a top-level `mcp_servers:` block, which `iota mcp add <name> -- <command>`
 # (or `--url <url>`) writes and `iota mcp remove <name>` edits for you.
@@ -224,14 +235,65 @@ must have at least one model; everything else is optional.
 | `system_file` | string | `""` | a file holding the system prompt, read when the run starts; `${…}` [expanded](#variable-expansion) at merge time (`${appHome}/prompts/reviewer.md`). A file that cannot be read fails the run rather than sending an empty prompt: `system_file: open /path: No such file or directory (os error 2)` |
 | `tools` | mapping | none | the [built-in toolsets](./builtin-toolsets.md) this agent gets. The **presence of a key** enables the set; its value is the set's configuration (nothing or `{}` = defaults), and any YAML-1.1 false spelling (`false`, `no`, `off`) disables it — the way to switch off `ask`, which is on by default interactively. The four names are `shell`, `code`, `skills`, `ask`; anything else fails the load (`agents.a.tools.web: unknown toolset (want shell, skills, code, ask)`), and the two retired names say what replaced them: `agent` → `the `agent` toolset is now called `skills` (the word `agent` names a config layer)`, `delegate` → `the `delegate` toolset was removed — run child agents from bash instead (see README)`. A set whose value does not decode is a startup warning (`toolset "shell": … (ignored)`), not an error. Naming at least one set here is also what makes iota send its [harness prompt](./system-prompt.md) |
 | `mcp_servers` | list of names | key absent | which of the top-level `mcp_servers:` this agent loads. **Absent** = all of them; `[]` = none; a list = exactly those. A name the top-level map does not define fails the run at startup: `mcp_servers: "gh" is not defined under the top-level mcp_servers` |
-| `workspace` | boolean | `false` | [agent mode](./agent-mode.md): the AGENTS.md chain and the skills catalog in the system prompt, the `skills` toolset (`load_skill`) enabled on its own, and sessions stored per project. It is the only way in — there is no flag. A run in agent mode that cannot resolve its working directory fails (`failed to resolve working directory: …`) |
-| `no_save` | boolean | `false` | start ephemeral, as `--no-save` does: nothing is written until `/save`. An explicit `iota resume` outranks it |
+| `mode` | `chat` \| `agent` \| `bot` | `chat` | how the agent is driven, each mode containing the one before it. `chat` is the agent's own prompt and tools and nothing else. `agent` is [agent mode](./agent-mode.md): the AGENTS.md chain and the skills catalog in the system prompt, the `skills` toolset (`load_skill`) enabled on its own, and sessions stored per project — a run in agent mode that cannot resolve its working directory fails (`failed to resolve working directory: …`). `bot` is [a bot](./bot-mode.md): everything `agent` is, plus one session that never ends and a memory — see [Bots](#bots) below for what it requires. The key is the only way in; there is no flag. Any other value fails the load: `agents.a.mode: unknown mode (want chat, agent, bot)` |
+| `no_save` | boolean | `false` | start ephemeral, as `--no-save` does: nothing is written until `/save`. An explicit `iota resume` outranks it. Not on a bot: `agents.coder: no_save contradicts mode: bot` |
 | `notify` | boolean | absent = **on** | the desktop notification sent when a reply lands or the model needs you while the terminal is unfocused. Three states: absent means on, so only an explicit `notify: false` silences it (`notify: true` is the default spelled out) |
 | `description` | string | `""` | what the agent is for — documentation of the entry, printed beside the name by `iota list agents`; the model never sees it |
 | `context_window` | string | `""` | overrides the model's own, same spelling and same errors (labelled `agent context_window: …`). One level: the agent over the model, no deeper |
 | `effort` | string | `""` | overrides the model's default; same five values |
 | `temperature` | number | unset | overrides the model's default; same range |
 | `top_p` | number | unset | overrides the model's default; same range |
+
+### `mode: agent` replaces `workspace: true`
+
+Until v0.6.0 agent mode was a boolean, `workspace: true`. It is now
+`mode: agent` — the same requests, byte for byte — and leaving the key out is
+`mode: chat`, what leaving `workspace:` out was. There is no compatibility: a
+config that still says `workspace:` fails to load with the plain unknown-key
+error, whose list names its replacement:
+
+```text
+agents.a.workspace: unknown key (want model, choices, system, system_file, tools, mcp_servers, mode, no_save, notify, description, context_window, effort, temperature, top_p)
+```
+
+### Bots
+
+`mode: bot` turns an entry into a bot. [Bots](./bot-mode.md) is the guide;
+these are the facts a config has to satisfy, all checked before a file is
+created:
+
+| Requirement | What you are told otherwise |
+|---|---|
+| The model is a chat model that reports token usage and can call tools | `bot "coder" needs a chat model that reports token usage and supports tools` |
+| The context window — the agent's `context_window`, else the model's, else the built-in 128k — is **at least 32k** | `bot "coder" needs a context window of at least 32k, this one is 8.2k (context_window: in its config)` |
+| The entry's name is a directory name: `^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$` | `agents.my bot: a bot's name must match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ (it names ~/.iota/bots/<name>)` |
+| The session is saved: no `no_save: true`, no `--no-save` | `agents.coder: no_save contradicts mode: bot` (`--no-save contradicts mode: bot` for the flag) |
+| The run is interactive: no `-m` | `bot agents are interactive-only for now; run iota run coder` |
+| Its session opens only as the bot | `iota resume <id>` of it: `session <id> belongs to bot coder; run iota run coder` |
+
+What follows from `mode: bot`:
+
+- **Where things are.** `~/.iota/bots/<name>/` is the bot's directory: a
+  pointer to its session (`bot.json`), its memory (`MEMORY.md`, with the
+  previous version as `MEMORY.md.prev`) and a lock. The session itself is a
+  bundle under `~/.iota/sessions/` like any other — but it is never put in a
+  project's bucket, the `/session` picker does not offer it, and `/session` is
+  not a command inside a bot.
+- **The config wins on every start.** The model, the context window, effort,
+  temperature and `top_p` are read from the config each time the bot starts,
+  not replayed from the session, so an edit takes effect on the next start; a
+  change made with `/model` lasts for that process only. An edited system
+  prompt takes effect on the next start too.
+- **Compaction is unattended.** A bot compacts without asking, earlier than
+  another agent would: it keeps a reserve of 25% of the window or 32k,
+  whichever is larger, but never more than half the window (200k compacts at
+  150k, 128k at 96k, 32k at 16k). Before compacting it gets a turn to save
+  what should outlive the compaction to its memory. A compaction that fails
+  twice in a row tells the host (`bot <name>: compaction failing — …`).
+- **Approvals still stop it.** A bot asks at every approval gate like any
+  other agent. `tools.code.auto_write` and `tools.shell.auto_run` are what let
+  it carry on with nobody there — the commented-out bot in the starter above
+  sets both, with the sandbox on.
 
 ### The four layered parameters
 
@@ -246,10 +308,10 @@ hand in `/model` fits in is on [the config file](./config-file.md#the-four-layer
 
 ### Booleans
 
-Every boolean key (`workspace`, `no_save`, `notify`, `image`, `json_edits`,
+Every boolean key (`no_save`, `notify`, `image`, `json_edits`,
 and the toolsets' `network`, `auto_run`, `auto_write`, `read_only`) takes the
 YAML 1.1 spellings in any case, quoted or plain: `true`/`yes`/`on` and
-`false`/`no`/`off`. A null value (`workspace:` with nothing after it) reads as
+`false`/`no`/`off`. A null value (`no_save:` with nothing after it) reads as
 `false` — or, for `notify`, as absent. Anything else fails the decode with
 `invalid value: expected a boolean (true/yes/on/false/no/off)`.
 
@@ -310,6 +372,29 @@ a variable whose value is itself `${cwd}` stays literal. A name the table does
 not know — or one whose lookup failed (no home, no cwd) — is left untouched as
 written, and `${}` is not a reference at all. Names are case-sensitive.
 
+## Environment variables
+
+Everything else is configured in the YAML file. Beside the API keys
+([above](#providersname)) and `NO_COLOR` ([Your first
+run](./quick-start.md#environment-variables)), these four are for the cases a
+config file cannot cover:
+
+| Variable | What it does | When you would use it |
+|---|---|---|
+| `IOTA_SHELL` | The interpreter the `shell` tool runs commands with — an absolute path or a name on `PATH`. Wins on every platform. | Your commands need a shell other than the one iota finds (`bash` on macOS and Linux; Git Bash, then PowerShell, then `cmd.exe` on Windows). A value that is not an executable is an error, never a silent fallback. See [which shell runs it](./builtin-toolsets.md#which-shell-runs-it). |
+| `IOTA_GIT_BASH_PATH` | Windows only: the `bash.exe` of Git Bash. | Git for Windows is installed somewhere iota does not look (not next to the `git.exe` on `PATH`, not in a default install root), or you want an MSYS2 bash. |
+| `IOTA_LOG` | A file path; iota appends its diagnostic log there (`tracing` events: iota at `DEBUG`, its libraries at `INFO`). | Something misbehaves — an MCP server, a connection — and you want to see what happened underneath. Nothing reaches this log unless the variable is set; warnings you need to act on are always shown in the terminal regardless. |
+| `IOTA_DEBUG_REGION` | A file path; iota appends a trace of every operation on the terminal's live region there. | You are reporting (or fixing) a rendering glitch — a stray blank row, a misplaced line — and need to show which layer drew it. Developer tooling; most people never need it. |
+
+**The stream idle timeout is a constant, not a setting.** A streamed response
+that sends no byte for **300 seconds** fails with `Response stalled` and is not
+retried — a retry would sit out the whole wait again. A heartbeat or a `ping`
+event from the provider keeps a stream alive, so a model that is thinking
+quietly is not cut off. There is no key and no variable for it; to stop
+waiting sooner, press Esc or Ctrl+C (see [Keys](./slash-commands.md#keys)).
+Beside it, a connection times out after 15 seconds, and the wait for the
+response's headers is 120 seconds.
+
 ## Errors
 
 The key audit runs on the raw document, before it is decoded, so every message
@@ -321,10 +406,11 @@ file. In order of precedence:
 | unknown top-level key | `agnets:` | `agnets: unknown top-level key (want providers:, models:, agents:, mcp_servers:)` |
 | a retired key | `providers.p.model` | `providers.p.model: `model` is now a `models:` entry — write `models.<name>: <provider>:<id>` and name it in `agents.<name>.model` (or list it in `choices:`)` |
 | | `agents.a.models` | `agents.a.models: `models` is now `choices:` (what /model and -M pick from) plus `model:` (the one the run starts on)` |
-| | `providers.p.agent` | `providers.p.agent: `agent` is now `workspace:` on an `agents:` entry` |
+| | `providers.p.agent` | `providers.p.agent: `agent` is now `mode: agent` on an `agents:` entry` |
 | a key of another layer | `providers.p.system` | `providers.p.system: `system` belongs under `agents:` (see README, "The three layers")` |
 | | `agents.a.url` | `agents.a.url: `url` belongs under `providers:` (see README, "The three layers")` |
 | an unknown key | `providers.p.kye` | `providers.p.kye: unknown key (want type, key, url)` |
+| | `agents.a.workspace` | `agents.a.workspace: unknown key (want model, choices, system, system_file, tools, mcp_servers, mode, no_save, notify, description, context_window, effort, temperature, top_p)` — see [`mode: agent` replaces `workspace: true`](#mode-agent-replaces-workspace-true) |
 | a retired toolset | `agents.a.tools.agent` | `agents.a.tools.agent: the `agent` toolset is now called `skills` (the word `agent` names a config layer)` |
 | | `agents.a.tools.delegate` | `agents.a.tools.delegate: the `delegate` toolset was removed — run child agents from bash instead (see README)` |
 | an unknown toolset | `agents.a.tools.web` | `agents.a.tools.web: unknown toolset (want shell, skills, code, ask)` |

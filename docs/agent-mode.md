@@ -1,22 +1,28 @@
 ---
 id: agent-mode
 title: Agent mode
-description: workspace true — AGENTS.md overlays, Agent Skills, load_skill, and project-scoped sessions.
+description: mode agent — AGENTS.md overlays, Agent Skills, load_skill, and project-scoped sessions.
 sidebar_label: Agent mode
 ---
 
 # Agent mode
 
-Agent mode is explicitly opt-in — set `workspace: true` on an agent in the
-config file. Off, the agent runs with just its own prompt and tools: no project
+Agent mode is explicitly opt-in — set `mode: agent` on an agent in the
+config file (until v0.6.0 this was `workspace: true`, which is now an unknown
+key). Off, the agent runs with just its own prompt and tools: no project
 overlay, no skills, no project-scoped sessions.
 
 ```yaml
 agents:
   claude:
     model: "anthropic:claude-sonnet-4-20250514"
-    workspace: true
+    mode: agent
 ```
+
+`mode` takes three values, each containing the one before: `chat` (the
+default — the agent's own prompt and tools), `agent` (this page), and `bot`,
+which is agent mode plus one conversation that never ends and a memory — see
+[Bots](./bot-mode.md).
 
 Everything is anchored at the **project root**: the git root of the working
 directory, or the working directory itself outside a repository.
@@ -78,4 +84,5 @@ Sessions started in agent mode are stored per project under
 only the current project's sessions there (`iota resume <id>` with an id from
 anywhere still works). Normal-mode sessions stay in the flat global store,
 whose list also shows every project's sessions labelled with their project —
-nothing is ever invisible.
+nothing is ever invisible. (A bot's session is kept in the flat store too, but
+opens only as its bot; see [Bots](./bot-mode.md#coming-back).)

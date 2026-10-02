@@ -13,7 +13,7 @@ The system message a run sends is not your `system:` alone. As of v0.3.2, an
 agent with `tools:` gets a short **harness** paragraph of iota's own ahead of
 it — who the model is running inside, what the machine looks like, and (with
 the `shell` set) how iota's own command line is driven — and an agent with
-`workspace: true` gets the AGENTS.md chain and the skills catalog after it.
+`mode: agent` (or `mode: bot`) gets the AGENTS.md chain and the skills catalog after it.
 This page is the structure, then the text, then the rules. It is composed at
 send time and never stored, so what you read here is what the wire carries; the
 same composition is what `/model`'s **System** tab shows.
@@ -28,13 +28,13 @@ Top to bottom, a blank line between segments:
 | `<environment>` | one `key: value` line per fact: project root, platform, shell, date, the `iota` binary, the config files — and, inside a [terminal host](./hosts.md) iota recognises, the host's name and the ids its CLI takes | same as the preamble | `harness.rs` (`environment_block`), `src/cmd/assemble.rs` (`harness_environment`, `HarnessInputs`), `src/host` (`Presenter::environment`) |
 | `<iota_cli>` | iota's own verbs and the three rules for changing its configuration | the `shell` set is among those `tools:` keys | `harness.rs` (`IOTA_CLI`) |
 | `<instructions>` | your `system:` / `system_file:` / `-s`, verbatim | you wrote one and it is not empty; with **no** harness the prompt is sent bare, untagged | `src/agents/mod.rs` (`compose_send_history`) |
-| AGENTS.md chain | every `AGENTS.md` from the project root down to the working directory, root first, joined by a blank line — **no tag** wraps it | `workspace: true` and at least one `AGENTS.md` exists on the path | `mod.rs` (`load_agents_chain`, `Overlay::content`) |
-| `<available_skills>` | one instruction sentence, then a `<skill>` entry per discovered skill | `workspace: true` and discovery found at least one valid `SKILL.md` | `src/agents/skills.rs` (`skills_catalog`, `SKILLS_CATALOG_INSTRUCTION`) |
+| AGENTS.md chain | every `AGENTS.md` from the project root down to the working directory, root first, joined by a blank line — **no tag** wraps it | `mode: agent` or `bot`, and at least one `AGENTS.md` exists on the path | `mod.rs` (`load_agents_chain`, `Overlay::content`) |
+| `<available_skills>` | one instruction sentence, then a `<skill>` entry per discovered skill | `mode: agent` or `bot`, and discovery found at least one valid `SKILL.md` | `src/agents/skills.rs` (`skills_catalog`, `SKILLS_CATALOG_INSTRUCTION`) |
 
 The first three segments are the harness; the last two are the **overlay** of
 [agent mode](./agent-mode.md). Any segment whose condition fails is left out
 entirely — no empty tag, no placeholder — and when nothing qualifies (a
-chat-only agent with no `workspace:`) the system message is your prompt exactly,
+`mode: chat` agent, the default) the system message is your prompt exactly,
 or no system message at all if you wrote none.
 
 ## The text
@@ -162,7 +162,7 @@ chat-only agent sent before the harness existed.
 
 ### The AGENTS.md chain
 
-With `workspace: true`, every `AGENTS.md` from the project root down to the
+With `mode: agent` or `bot`, every `AGENTS.md` from the project root down to the
 working directory (at most one per directory, root first, nearer files later
 so they override) is read, each trimmed of trailing newlines, and joined by a
 blank line. A working directory outside the root — or the root itself —
@@ -183,7 +183,7 @@ in the startup banner's file count) and contributes no text.
 
 ### `<available_skills>`
 
-With `workspace: true` and at least one valid skill under the [discovery
+With `mode: agent` or `bot` and at least one valid skill under the [discovery
 roots](./agent-mode.md#skills), the catalog closes the message: the
 instruction sentence, a blank line, then the block.
 
@@ -234,7 +234,7 @@ reloaded` notice), so what a turn sends is always the files as they are.
   built-in set (`shell`, `code`, `skills`, `ask`) and not written `false`.
   `tools: {ask: false}` alone sends nothing; so does an unknown set name (a
   warning, not a set). Sets iota enables on its own — `skills` under
-  `workspace: true`, `ask` in an interactive run — do not count unless you also
+  `mode: agent`, `ask` in an interactive run — do not count unless you also
   wrote them.
 - **An agent without `tools:` sends nothing extra.** A chat-only agent or a
   JSON pipeline puts exactly its own bytes on the wire, as it always did.
@@ -246,14 +246,14 @@ Why there is a harness at all: every neighbour — Claude Code, Codex, Gemini
 CLI, OpenCode — puts a paragraph of its own ahead of the user's prompt, and
 without one a fresh install with `code` and `shell` did not know it could run
 `iota mcp add`. The trigger is `tools:` rather than a key because the users who
-need `<iota_cli>` most are the starter config's, whose `workspace:` is commented
+need `<iota_cli>` most are the starter config's, whose `mode:` is commented
 out — and because an agent without tools is a chat or a pipeline whose bytes
 must not change.
 
 ## See also
 
 - [The config file](./config-file.md) — the three layers, and where `system:`
-  and `workspace:` live.
+  and `mode:` live.
 - [Configuration reference](./config-reference.md) — every key, one by one.
 - [Agent mode](./agent-mode.md) — the AGENTS.md convention and skill discovery.
 - [Built-in toolsets](./builtin-toolsets.md) — what the tools the preamble
