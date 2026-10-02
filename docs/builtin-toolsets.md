@@ -13,7 +13,7 @@ enabled by listing it under that agent's `tools:` key; the value is the set's
 shared configuration, and an empty value uses its defaults. There are four:
 `shell` (running shell commands, sandboxed), `code` (reading, searching and
 editing project files), `skills` (skill activation; auto-enabled by
-`workspace: true`), and `ask` (interactive questions to the user; on by default
+`mode: agent` and `mode: bot`), and `ask` (interactive questions to the user; on by default
 in interactive sessions — disable with `ask: false`).
 
 ```yaml
@@ -463,7 +463,7 @@ whole, in which case no diff is shown rather than a lying one.
 One tool, `load_skill`, that activates a skill from the catalog in the [system
 prompt](./system-prompt.md#available_skills) and reads its bundled files. It
 takes no configuration: `skills:` under `tools:` enables it, and any value is
-ignored. `workspace: true` enables it on its own — an explicit `skills:` entry
+ignored. `mode: agent` (and `mode: bot`) enables it on its own — an explicit `skills:` entry
 is registered first and the automatic one then finds `load_skill` already
 there, so declaring both changes nothing. The set was called `agent` before
 the three-layer split, where that word became the name of a config layer; the

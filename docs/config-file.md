@@ -34,7 +34,7 @@ The config has three top-level maps, each answering one question:
 |-----|---------|------|
 | `providers:` | *how do I reach the API?* | `type`, `key`, `url` |
 | `models:` | *which model, and what does its protocol look like?* | `provider`, `id`, `context_window`, `defer_mode`, image knobs, `effort`/`temperature`/`top_p` defaults |
-| `agents:` | *how do I use it?* | `model`, `choices`, `system`/`system_file`, `tools`, `mcp_servers`, `workspace`, `no_save`, `notify`, `description`, and overrides for `context_window`/`effort`/`temperature`/`top_p` |
+| `agents:` | *how do I use it?* | `model`, `choices`, `system`/`system_file`, `tools`, `mcp_servers`, `mode`, `no_save`, `notify`, `description`, and overrides for `context_window`/`effort`/`temperature`/`top_p` |
 
 **A run names an agent.** `iota run <name>` resolves `agents:` and nothing
 else: the agent decides which model it drives, and the model decides which
@@ -105,7 +105,7 @@ agents:                      # usage: how a model is driven
       code:
       shell:
     mcp_servers: [github]    # load only these MCP servers; [] = none; key absent = all
-    workspace: true          # project overlay (AGENTS.md) + skills + project-scoped sessions
+    mode: agent              # project overlay (AGENTS.md) + skills + project-scoped sessions
 
   reviewer:
     model: sonnet
@@ -199,7 +199,8 @@ error still drops the file with a warning, because the parser is the only thing
 that knows what went wrong.)
 
 Two keys changed name when the layers split: a provider's `agent: true` is an
-agent's `workspace: true`, and the `agent` toolset is now called `skills`. The
+agent's `mode: agent` (since v0.6.0; it was `workspace: true` before), and the
+`agent` toolset is now called `skills`. The
 `delegate` toolset was removed outright — a child agent is a bash subprocess
 now (see the [`shell` set](./builtin-toolsets.md#child-agents)).
 
@@ -213,7 +214,7 @@ providers:
     model: deepseek-chat              # ✗ → a `models:` entry
     system: "You are terse"           # ✗ → `agents.<name>.system`
     tools: {code: {}}                 # ✗ → `agents.<name>.tools`
-    agent: true                       # ✗ → `agents.<name>.workspace`
+    agent: true                       # ✗ → `agents.<name>.mode`
 
 # the same thing, in three layers
 providers:
@@ -225,7 +226,7 @@ agents:
     model: deepseek
     system: "You are terse"
     tools: {code: {}}
-    workspace: true
+    mode: agent
 ```
 
 `iota config check` loads the files and reports the three layers, warning when

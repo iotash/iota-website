@@ -25,7 +25,7 @@ iota [command] [flags]
 |---------|--------------|
 | `iota` | Run the agent named `default`, interactively |
 | `iota run <agent>` | Run that `agents:` entry, interactively |
-| `iota run <agent> -m "…"` | One headless turn: message in, reply out |
+| `iota run <agent> -m "…"` | One headless turn: message in, reply out (not for a [bot](./bot-mode.md), which is interactive only) |
 | `iota run` | The same as a bare `iota` |
 | `iota list [agents\|models\|providers\|sessions]` | What the config declares (no argument: `agents`); `iota list models <agent>` shows one agent's model and choices |
 | `iota resume [<id>]` | Resume a saved session — any unique id prefix; with no id, pick from a list |
@@ -65,7 +65,7 @@ which is a run that starts from a saved session), so they go after the command.
 them. The key comes from an environment variable or `providers.<name>.key`, the
 URL from `providers.<name>.url`, the temperature and the window from `models:`
 or `agents:`, the prompt from `agents.<name>.system`, and agent mode from
-`agents.<name>.workspace`.
+`agents.<name>.mode`.
 
 :::
 
@@ -97,7 +97,9 @@ One decides whether the terminal gets colors at all:
 |----------|--------------|
 | `NO_COLOR` | Set to any non-empty value ([no-color.org](https://no-color.org)), it turns color off for the run — as does `TERM=dumb`, or a stdout that is not a terminal. The chat itself (replies, tool output, diffs) is then plain text with no escape sequence at all; the frame around it (the composer, the status row, the panels) keeps bold, faint and reverse video so it stays readable, but drops every color. Images still render in color: their pixels are the picture |
 
-And one is for whoever is debugging iota itself:
+And two are for whoever is debugging iota itself — `IOTA_LOG` below, and
+`IOTA_DEBUG_REGION` for rendering glitches; all four of iota's own variables
+are in [the configuration reference](./config-reference.md#environment-variables):
 
 | Variable | What it does |
 |----------|--------------|
