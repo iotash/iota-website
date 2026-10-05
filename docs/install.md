@@ -96,6 +96,11 @@ macOS, Linux and Windows, Apple Silicon and x86-64 alike. Every release carries
 (`aarch64-pc-windows-msvc`) is not a release target and nothing tests it, so
 there it means building from source.
 
+The Linux binaries need glibc 2.28 or newer — RHEL, AlmaLinux and Rocky 8,
+Debian 11 and Ubuntu 20.04 onward — and the shell installer asks for no more.
+Until v0.6.1 the binaries were built against glibc 2.34 and the installer
+wanted 2.35, so it turned away even the RHEL 9 family and Amazon Linux 2023.
+
 Two things differ on Windows, both about the `shell` toolset:
 
 - **It runs the shell the machine has** — iota embeds no interpreter. The first
