@@ -143,7 +143,7 @@ iota run default -M "deepseek:*"
 ```
 
 `-M` accepts a candidate's name, a bare model id, or `provider:id`. A model
-outside the agent's `models:` list is a warning, not a refusal — the list is
+outside the agent's `choices:` is a warning, not a refusal — the list is
 advice about what works well here, not a whitelist.
 
 ## The system prompt: what iota adds to yours
@@ -172,11 +172,18 @@ filters the list as you type, and commits what you typed through a `use "…" as
 typed` row. A provider that does not implement a model listing at all (most
 relays) is therefore an ordinary case, not a failure mode.
 
-Rows on the endpoint the session is talking to are written bare; rows from
-another provider carry it (`relay:vendor/model`). Choosing one of those is
-reported rather than applied — a session keeps the endpoint it started on,
-since the history it replays is that dialect's own — and the message names the
-`iota run <agent> -M provider:id` that starts a run there.
+A row is named the same wherever the chat is: `provider:model`, or just the
+model when every choice is on one provider, followed in brackets by the
+`models:` entries that name it (`relay:vendor/fast [fast]`). What picking it
+does is an annotation beside it, like `(current)`. A row on another provider
+reads `(moves the chat)`: before the first reply, picking it moves the chat
+there; once a model has replied, iota saves the chat, tells you how many
+replies carry provider-specific payload the target will not replay, that
+`iota resume <id>` continues on the new model afterwards and that picking the
+old row moves it back, and asks before anything changes. A chat that is not
+saved is told to `/save` first, and a model of another kind (an image model
+for a chat) is refused. A bot never moves — its config does — so there the row
+reads `(needs a new session)`.
 
 ## One layer per key
 

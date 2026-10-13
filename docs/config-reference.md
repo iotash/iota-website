@@ -11,7 +11,7 @@ Every key the config file accepts, layer by layer: its type, its default, what
 it means, what it accepts, and what you are told when it is wrong. [The config
 file](./config-file.md) is the concept page — the three layers, how an agent
 reaches a model, the layered parameters; this is the lookup table. Facts are
-as of v0.6.1.
+as of v0.7.0.
 
 ## Files, lookup and merge
 
@@ -199,8 +199,9 @@ endpoint (`models.x: "sonnet" names no provider (want "provider:model")`), and
 Everything after the **first** colon is the id, so a relay's `vendor/model`
 shape survives (`openrouter:anthropic/claude-3.5-sonnet`).
 
-The mapping form takes these twelve keys; the last four parameters are defaults
-an agent may [override](#the-four-layered-parameters).
+The mapping form takes these thirteen keys; `context_window`, `effort`,
+`temperature`, `top_p` and `max_tokens` are defaults an agent may
+[override](#the-four-layered-parameters).
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
@@ -211,6 +212,7 @@ an agent may [override](#the-four-layered-parameters).
 | `effort` | string | `""` = the provider's default | the default reasoning effort: `low`, `medium`, `high`, `xhigh` or `max`, exactly. Anything else: `config effort "extreme": want low|medium|high|xhigh|max`. On the Google dialects (`gemini`, `vertexai`) the five map onto Gemini's three `thinking_level`s — `xhigh` and `max` are sent as `HIGH` rather than refused |
 | `temperature` | number | unset = the provider's default | the default sampling temperature, `0.0`–`2.0` inclusive; outside that range the run refuses to start: `config temperature 3: want 0.0-2.0`. On a provider type that has no temperature (the image types) it is a warning and is dropped |
 | `top_p` | number | unset = the provider's default | nucleus sampling, `0.0`–`1.0`; outside: `config top_p 1.5: want 0.0-1.0`. Tune this **or** `temperature`, not both, and expect reasoning models to reject or ignore it |
+| `max_tokens` | integer | unset = 32000 on the Anthropic dialect | the output ceiling of an Anthropic-dialect model, thinking included; 1 or more (`config max_tokens 0: want 1 or more`). A ceiling, not a charge — tokens are billed as they are produced; an endpoint that caps lower refuses a larger value, so set it below that cap. An output it cuts off is shown as `Output truncated`, never as the answer. On any other provider type it does nothing and says so: ``Warning: `max_tokens` does not apply to provider type … (ignored)`` |
 | `image` | boolean | `false` | opts into image generation on a chat provider that needs the request-side switch (`openresponses` advertises the `image_generation` tool, the Google types add `responseModalities`). Redundant on `imagen`/`images` (a warning: they always generate) — see [Image generation](./image-generation.md) |
 | `aspect_ratio` | string | `""` = omitted | an image-provider generation default, passed through verbatim (`"3:2"`) |
 | `image_size` | string | `""` = omitted | an image-provider generation default, verbatim (`"2K"`, `"1536x1024"` for `images`) |
@@ -243,6 +245,7 @@ must have at least one model; everything else is optional.
 | `effort` | string | `""` | overrides the model's default; same five values |
 | `temperature` | number | unset | overrides the model's default; same range |
 | `top_p` | number | unset | overrides the model's default; same range |
+| `max_tokens` | integer | unset | overrides the model's ceiling; same rule. A session records it and `iota resume` restores it; a bot reads it from the config on each start. There is no `/model` tab or flag for it |
 
 ### `mode: agent` replaces `workspace: true`
 
@@ -253,7 +256,7 @@ config that still says `workspace:` fails to load with the plain unknown-key
 error, whose list names its replacement:
 
 ```text
-agents.a.workspace: unknown key (want model, choices, system, system_file, tools, mcp_servers, mode, no_save, notify, description, context_window, effort, temperature, top_p)
+agents.a.workspace: unknown key (want model, choices, system, system_file, tools, mcp_servers, mode, no_save, notify, description, context_window, effort, temperature, top_p, max_tokens)
 ```
 
 ### Bots
@@ -298,7 +301,8 @@ What follows from `mode: bot`:
 ### The four layered parameters
 
 `context_window`, `effort`, `temperature` and `top_p` may be written in both
-`models:` and `agents:` — the only keys that may — and the rule is one line:
+`models:` and `agents:` — the only keys that may, with `max_tokens`, which
+follows the same rule — and the rule is one line:
 the agent's value when it has one, else the model's, else the built-in
 default, evaluated when a session starts and again whenever `/model` switches
 model. It is exactly **one** level of inheritance, deliberately not a chain:
@@ -410,7 +414,7 @@ file. In order of precedence:
 | a key of another layer | `providers.p.system` | `providers.p.system: `system` belongs under `agents:` (see README, "The three layers")` |
 | | `agents.a.url` | `agents.a.url: `url` belongs under `providers:` (see README, "The three layers")` |
 | an unknown key | `providers.p.kye` | `providers.p.kye: unknown key (want type, key, url)` |
-| | `agents.a.workspace` | `agents.a.workspace: unknown key (want model, choices, system, system_file, tools, mcp_servers, mode, no_save, notify, description, context_window, effort, temperature, top_p)` — see [`mode: agent` replaces `workspace: true`](#mode-agent-replaces-workspace-true) |
+| | `agents.a.workspace` | `agents.a.workspace: unknown key (want model, choices, system, system_file, tools, mcp_servers, mode, no_save, notify, description, context_window, effort, temperature, top_p, max_tokens)` — see [`mode: agent` replaces `workspace: true`](#mode-agent-replaces-workspace-true) |
 | a retired toolset | `agents.a.tools.agent` | `agents.a.tools.agent: the `agent` toolset is now called `skills` (the word `agent` names a config layer)` |
 | | `agents.a.tools.delegate` | `agents.a.tools.delegate: the `delegate` toolset was removed — run child agents from bash instead (see README)` |
 | an unknown toolset | `agents.a.tools.web` | `agents.a.tools.web: unknown toolset (want shell, skills, code, ask)` |
