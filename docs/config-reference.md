@@ -11,7 +11,7 @@ Every key the config file accepts, layer by layer: its type, its default, what
 it means, what it accepts, and what you are told when it is wrong. [The config
 file](./config-file.md) is the concept page — the three layers, how an agent
 reaches a model, the layered parameters; this is the lookup table. Facts are
-as of v0.7.0.
+as of v0.7.1.
 
 ## Files, lookup and merge
 
@@ -84,7 +84,7 @@ models:
 agents:
   default:
     model: gpt                # the model a run starts on; leave it out to start in the picker
-    # choices: [gpt]          # what /model and -M pick from; absent = every `models:` entry
+    # choices: [gpt]          # what /model and -M pick from; absent = `model:` alone
     # Your own instructions. iota already tells the model what it runs inside and where (the
     # built-in harness prompt: identity, environment, and its own command line when `shell` is on).
     system: "You are a careful coding assistant."
@@ -232,7 +232,7 @@ must have at least one model; everything else is optional.
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `model` | a model reference | unset — the run starts in the `/model` picker | the model the run starts on: a `models:` entry name (`sonnet`) or an inline `provider:id` (`anthropic:claude-sonnet-4`). Never a wildcard: `agents.a.model: "openai:*" is a wildcard — put it in choices: and leave model: unset to start in the picker`. Outside `choices` it is a warning, not a refusal. `-M` replaces it for one run; a headless run with neither is refused (`no model chosen: set agents.<name>.model or pass -M`) |
-| `choices` | a model reference, or a list of them | every `models:` entry, in declaration order | what `/model` and `-M` offer. Each item is one of three forms: a `models:` entry name (`sonnet`); an inline `provider:id` (`anthropic:claude-sonnet-4`, everything after the first colon being the id); or a wildcard `provider:*`, every model that provider lists, fetched when the picker opens. `choices: sonnet` and `choices: [sonnet]` are the same; the order is the picker's. Errors: `choices: unknown model "sonet"` for an entry name nothing declares, `choices: unknown provider "opnai"` for an inline or wildcard on a provider that is neither configured nor built in — and `- anthropic: claude-x` (a space after the colon, which YAML reads as a mapping) gets `a model reference must be a string like "provider:model", but `anthropic: claude-x` parses as a YAML mapping — remove the space after the colon (`anthropic:claude-x`)` |
+| `choices` | a model reference, or a list of them | the agent's `model:` alone; with no `model:` either, every `models:` entry, in declaration order | what `/model` and `-M` offer. Each item is one of three forms: a `models:` entry name (`sonnet`); an inline `provider:id` (`anthropic:claude-sonnet-4`, everything after the first colon being the id); or a wildcard `provider:*`, every model that provider lists, fetched when the picker opens. `choices: sonnet` and `choices: [sonnet]` are the same; the order is the picker's. Choices are advice: a model outside them is a warning, and a bare word given to `-M` or typed in `/model` is the `models:` entry of that name whether or not it is listed (only a word no entry has is a model id on the current provider). Errors: `choices: unknown model "sonet"` for an entry name nothing declares, `choices: unknown provider "opnai"` for an inline or wildcard on a provider that is neither configured nor built in — and `- anthropic: claude-x` (a space after the colon, which YAML reads as a mapping) gets `a model reference must be a string like "provider:model", but `anthropic: claude-x` parses as a YAML mapping — remove the space after the colon (`anthropic:claude-x`)` |
 | `system` | string | `""` | the system prompt, inline. Wins over `system_file` when both are set; `-s` replaces either for one run. What iota puts around it is on [The system prompt](./system-prompt.md) |
 | `system_file` | string | `""` | a file holding the system prompt, read when the run starts; `${…}` [expanded](#variable-expansion) at merge time (`${appHome}/prompts/reviewer.md`). A file that cannot be read fails the run rather than sending an empty prompt: `system_file: open /path: No such file or directory (os error 2)` |
 | `tools` | mapping | none | the [built-in toolsets](./builtin-toolsets.md) this agent gets. The **presence of a key** enables the set; its value is the set's configuration (nothing or `{}` = defaults), and any YAML-1.1 false spelling (`false`, `no`, `off`) disables it — the way to switch off `ask`, which is on by default interactively. The four names are `shell`, `code`, `skills`, `ask`; anything else fails the load (`agents.a.tools.web: unknown toolset (want shell, skills, code, ask)`), and the two retired names say what replaced them: `agent` → `the `agent` toolset is now called `skills` (the word `agent` names a config layer)`, `delegate` → `the `delegate` toolset was removed — run child agents from bash instead (see README)`. A set whose value does not decode is a startup warning (`toolset "shell": … (ignored)`), not an error. Naming at least one set here is also what makes iota send its [harness prompt](./system-prompt.md) |

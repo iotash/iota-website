@@ -91,6 +91,7 @@ What a bot does not do, because it has one session and it runs interactively:
 | `iota resume <id>` of the bot's session | `session <id> belongs to bot coder; run iota run coder` |
 | `--no-save`, or `no_save: true` on the entry | `--no-save contradicts mode: bot` / `agents.coder: no_save contradicts mode: bot` |
 | `/session` inside the bot | not a command there; and other agents' `/session` neither offers the bot's session nor deletes it |
+| `/new` (or `/clear`) inside the bot | not listed, and refused: `A bot's session never ends: to start over, run another agent or rename the bot.` |
 
 To start over, give the entry a new name — a new name is a new bot, with a
 new directory and a new conversation. The old one stays on disk.

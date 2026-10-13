@@ -99,7 +99,7 @@ models:                      # configured models: provider + id + protocol + def
 agents:                      # usage: how a model is driven
   default:
     model: gpt5              # the model the run starts on; absent = start in the picker
-    choices: [gpt5, sonnet, "deepseek:*"]   # what /model and -M offer; absent = every models: entry
+    choices: [gpt5, sonnet, "deepseek:*"]   # what /model and -M offer; absent = model: alone
     system: "You are a helpful coding assistant"
     tools:
       code:
@@ -142,7 +142,10 @@ iota run default -M "deepseek:deepseek-reasoner" -m "hi"
 iota run default -M "deepseek:*"
 ```
 
-`-M` accepts a candidate's name, a bare model id, or `provider:id`. A model
+`-M` accepts a `models:` entry's name, a bare model id, or `provider:id`. A
+bare word is the `models:` entry of that name whether or not it is among the
+choices — `-M fast` is the model `fast` stands for, never a model id spelled
+`fast`; only a word no entry has is a model id on the current provider. A model
 outside the agent's `choices:` is a warning, not a refusal — the list is
 advice about what works well here, not a whitelist.
 
@@ -159,7 +162,8 @@ text are on [The system prompt](./system-prompt.md).
 ## The choices are what `/model` offers
 
 `agents.<name>.choices` is the row list of the [`/model`](./slash-commands.md)
-picker — every `models:` entry when the key is absent. Entries and inline
+picker. Without the key, an agent is offered its `model:` alone; one that
+names no `model:` either is offered every `models:` entry. Entries and inline
 `provider:id`s are rows on the spot; every `provider:*` in the list is a listing request, and **several of them go out at
 once** — the wait is the slowest endpoint, not the sum of them, and Esc cancels
 all of them together.
@@ -174,16 +178,16 @@ relays) is therefore an ordinary case, not a failure mode.
 
 A row is named the same wherever the chat is: `provider:model`, or just the
 model when every choice is on one provider, followed in brackets by the
-`models:` entries that name it (`relay:vendor/fast [fast]`). What picking it
-does is an annotation beside it, like `(current)`. A row on another provider
-reads `(moves the chat)`: before the first reply, picking it moves the chat
-there; once a model has replied, iota saves the chat, tells you how many
-replies carry provider-specific payload the target will not replay, that
+`models:` entries that name it (`relay:vendor/fast [fast]`), and `(current)` on
+the one the chat is running. A row does not say what picking it does; the pick
+reports itself. A row on another provider moves the chat: before the first
+reply, picking it moves the chat there at once; once a model has replied,
+iota saves the chat, tells you how many replies carry provider-specific payload the target will not replay, that
 `iota resume <id>` continues on the new model afterwards and that picking the
 old row moves it back, and asks before anything changes. A chat that is not
 saved is told to `/save` first, and a model of another kind (an image model
-for a chat) is refused. A bot never moves — its config does — so there the row
-reads `(needs a new session)`.
+for a chat) is refused. A bot never moves — its config does — so there the
+pick is refused.
 
 ## One layer per key
 
