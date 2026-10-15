@@ -83,9 +83,10 @@ forever: a streamed reply that sends no byte for **300 seconds** fails with
 stall is kept — its tool calls and their results, and the partial reply,
 marked as cut short — so sending your message again picks up from there; if
 it keeps happening, check the provider's `url` and the model. The 300 seconds
-is fixed, not a setting. While the request is out, the busy row says
+is fixed, not a setting. While the request is out, the status row says
 `Waiting for the model`, and `Waiting for the first token` once the provider
-has answered.
+has answered; its clock counts the whole turn, from the moment you sent the
+message.
 
 ## Supported file types
 

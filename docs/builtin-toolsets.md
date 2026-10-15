@@ -117,8 +117,9 @@ the sandbox)` after an iota call.
 Past 512 lines the first 128 and the last 384 are kept around `[... N lines
 omitted — pipe through head/tail/grep to narrow the output ...]`; past 32 KB
 the first 8 KB and the last 22 KB around `[... N bytes omitted ...]`. While a
-command runs the status-line spinner shows the elapsed time; **ESC** (or
-Ctrl+C) terminates it.
+command runs, its own line above the input shows how long it has been running,
+and the status row says `Running tools` with the turn's clock and
+`(ESC to cancel)`; **ESC** (or Ctrl+C) terminates it.
 
 **What the model reads**, in the order the cases are checked:
 
