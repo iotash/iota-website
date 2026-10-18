@@ -241,5 +241,7 @@ it can be reconnected from `/tools`.
 call is given up and the model is told the server did not answer in time. The
 deadline is a backstop for a server that stopped answering, not a speed limit;
 a server whose tools legitimately run longer can raise it with
-[`tool_timeout_sec`](./config-reference.md#mcp_serversname) in its entry. A
-call that times out does not mark the server down.
+[`tool_timeout_sec`](./config-reference.md#mcp_serversname) in its entry. There
+is no "never": `0` is refused when the config loads, since a headless run or a
+bot has no ESC to end a call nobody answers — for a tool that runs for hours,
+write a large number. A call that times out does not mark the server down.
