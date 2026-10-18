@@ -86,6 +86,22 @@ worker off the chat loop, each bounded to half a second; a failure is a debug
 log line and nothing else. On a platform without Unix sockets the same
 reports go through the `herdr` binary's `pane report-agent` command.
 
+### What the chat's children inherit
+
+herdr keeps one lifecycle authority per pane, and the hooks it installs for
+other agents report into the pane they find in their environment whenever
+`HERDR_ENV=1`. So inside a herdr pane, **the shell tool's commands and the MCP
+stdio servers start without `HERDR_ENV`**: an agent the model runs from the
+shell — `claude -p …`, say — leaves the pane to iota instead of claiming it,
+which until v0.7.3 left the pane showing `working` with the chat idle until it
+was closed. `HERDR_PANE_ID` and `HERDR_SOCKET_PATH` stay, so the `herdr`
+command line works as before (`herdr pane split --current`), and a pane the
+model opens with it gets its own herdr identity from herdr — an agent started
+in a pane of its own reports there as it should. An MCP server whose `env:`
+sets `HERDR_ENV` itself keeps it. The model is told this in its
+[environment](./system-prompt.md#the-hosts-lines), so a `test "$HERDR_ENV" = 1`
+that fails in its shell does not surprise it.
+
 ## cmux
 
 [cmux](https://cmux.dev) is a macOS terminal with a sidebar. Inside one —

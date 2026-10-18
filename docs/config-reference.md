@@ -11,7 +11,7 @@ Every key the config file accepts, layer by layer: its type, its default, what
 it means, what it accepts, and what you are told when it is wrong. [The config
 file](./config-file.md) is the concept page — the three layers, how an agent
 reaches a model, the layered parameters; this is the lookup table. Facts are
-as of v0.7.2.
+as of v0.7.3.
 
 ## Files, lookup and merge
 
@@ -332,13 +332,14 @@ by hand. A server is either **stdio** (`command`, with `args` and `env`) or
 | `command` | string | `""` | stdio transport: the program to spawn. `${…}` expanded when the server starts |
 | `args` | list of strings | `[]` | stdio transport: its arguments, each expanded (`["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]`) |
 | `url` | string | `""` | streamable-HTTP transport: the endpoint URL, expanded |
-| `env` | map of string to string | `{}` | extra environment for the child process; **values** are expanded, names are not |
+| `env` | map of string to string | `{}` | extra environment for the child process; **values** are expanded, names are not. Applied after the variables a [host](./hosts.md#what-the-chats-children-inherit) withholds, so one set here is kept |
 | `headers` | map of string to string | `{}` | extra HTTP headers; values expanded, names not. An `Authorization` header (any case) makes the entry `auth: none` in effect — you wrote the credential, so a `401` means that one is wrong, not that a login is missing |
 | `defer` | string | absent = advertise fully | [deferred loading](./mcp.md#deferred-loading): the presence of the key defers the server, and the value **is** the one-line summary of its tools shown in the manifest — which is why it is a string, not a bool. An empty string is a loud warning and the server is **not** deferred: `Warning: mcp server <name>: defer needs a one-line summary of the server's tools (not deferred)` |
 | `auth` | `auto` \| `oauth` \| `none` | `auto` | how an HTTP server is authenticated. `auto` discovers it — a token file when there is one, else the server's own `401` at the handshake; `oauth` forces the login (no token = not logged in, no bare attempt); `none` forbids it (a `401` is a failed connect, and `iota mcp login` refuses the entry). On a stdio server `auth: oauth` fails the load: `mcp_servers.<name>: auth: oauth needs a url (a stdio server has nothing to log in to)` |
 | `client_id` | string | `""` = dynamic registration, else the Client ID Metadata Document | an OAuth client registered with the authorization server out of band |
 | `client_secret` | string | `""` = a public client | the secret paired with `client_id`, written as a `${env:VAR}` reference and expanded like every other value. Needs a `client_id`: `mcp_servers.<name>: client_secret needs a client_id` |
 | `redirect_port` | integer | absent = `17801` | with a `client_id`: the loopback port the registered redirect URI (`http://127.0.0.1:<port>/callback`) was registered with — a pre-registered client's URI must match exactly, so the port is fixed, where a client registered on the spot gets a random one. Needs a `client_id`: `mcp_servers.<name>: redirect_port needs a client_id (only a pre-registered client has a fixed redirect URI)` |
+| `tool_timeout_sec` | integer (seconds) | absent = 30 minutes | how long one tool call to this server may go unanswered before it is given up; the model is then told `MCP server "<name>": no answer within <d>, so the call was given up — if the tool is meant to run that long, raise tool_timeout_sec for this server in the config`. A backstop for a server that stopped answering, not a speed limit — raise it for tools that legitimately run longer. A call that times out does not mark the server down. `/tools` shows the deadline in effect on the server's page (see [When a server fails](./mcp.md#when-a-server-fails)) |
 
 The three client keys describe a login, so any of them on a stdio server
 (`mcp_servers.<name>: client_id/client_secret/redirect_port describe an OAuth
@@ -346,7 +347,7 @@ login, and a stdio server has nothing to log in to`) or beside `auth: none`
 (`… describe an OAuth login, which `auth: none` rules out`) fails the load.
 An unknown key here is `mcp_servers.fs.commadn: unknown key (want command,
 args, url, env, headers, defer, auth, client_id, client_secret,
-redirect_port)`.
+redirect_port, tool_timeout_sec)`.
 
 **Project scope holds references, not secrets.** `./.iota.yaml` is shared with
 everyone who clones the project, so `iota mcp add --scope project` refuses a

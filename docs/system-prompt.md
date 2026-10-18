@@ -97,6 +97,7 @@ host: herdr
 herdr pane: w1:p2
 herdr workspace: w1
 herdr tab: w1:t1
+herdr note: HERDR_ENV is unset in your shell on purpose; the herdr CLI works
 </environment>
 ```
 
@@ -105,6 +106,7 @@ herdr tab: w1:t1
 | `host:` | the host's name: `herdr` or `cmux` — one host, the innermost (a herdr pane inside a cmux window says `herdr` and nothing about cmux, see [nesting](./hosts.md#nesting)) | the detected host |
 | `herdr pane:` | the pane the chat runs in, as `herdr pane …` commands take it (`HERDR_PANE_ID`) | `host::herdr` |
 | `herdr workspace:`, `herdr tab:` | the pane's workspace and tab (`HERDR_WORKSPACE_ID`, `HERDR_TAB_ID`); each line only when herdr injected the id | `host::herdr` |
+| `herdr note:` | always, in a herdr pane: the shell tool runs without `HERDR_ENV` on purpose (see [what the chat's children inherit](./hosts.md#what-the-chats-children-inherit)), so a check like `test "$HERDR_ENV" = 1` failing there is expected and the `herdr` CLI still works | `host::herdr` |
 | `cmux surface:` | the surface the chat runs in (`CMUX_SURFACE_ID`) | `host::cmux` |
 
 These lines are gathered from the host layer, not read by the prompt code — a

@@ -117,7 +117,8 @@ when the server rejects it; a server with no usable token is reported as
 `not logged in: run iota mcp login <name>` and left out of that run while every
 other server loads. In the chat, `/tools` shows each server's state, a server
 waiting for a login included; the login itself is `iota mcp login <name>` from
-the shell, and a new session picks the token up.
+the shell, and reconnecting the server from its page in `/tools` picks the
+token up in the chat you are in (a new session picks it up too).
 
 `auth:` is optional. Left out, a server is *auto*: with a token file it connects
 through OAuth, without one a `401`/`403` at the handshake is reported as
@@ -170,6 +171,75 @@ the one the session started with. Changing it means a new session.
 
 ## Seeing what is connected
 
-`/tools` opens a tabbed read-only view of the model's capabilities: a
-**Tools** tab listing every built-in and MCP tool with its source, and an
-**MCP** tab with server status, endpoints, and tools.
+`/tools` is one list of where the model's tools come from: `built in` (the
+tools iota ships with) first, then each server, with how many tools it has and
+how it stands — the reason in a few words when it is not connected. The list
+refreshes while it is open, so a server that finishes connecting in the
+background, goes down or is reconnected changes in front of you.
+
+```text
+ 4 MCP servers · 10 tools · Enter: open · Esc: close
+▸ built in  2 tools  available
+  dead      3 tools  down: exited (its last stderr line: "mock_mcp: <- tools/list") — its tools will fail until it …
+  flaky     3 tools  down: exited (its last stderr line: "mock_mcp: <- tools/list") — its tools will fail until it …
+  ok        2 tools  connected
+  refused   —        failed: can't reach http://127.0.0.1:1/mcp: connection refused — check the url, and that the s…
+```
+
+| State | Means |
+|---|---|
+| `connected` | the server answered and its tools are offered to the model |
+| `connecting…` / `reconnecting…` | still starting; a server being reconnected keeps its tools meanwhile |
+| `down` | it connected, then stopped (killed, crashed); its tools are still offered, and a call to them says it has exited |
+| `needs login` | an HTTP server with no usable token: `run iota mcp login <name>` |
+| `failed` | it never connected; the reason follows |
+
+**Enter opens a source's page; Esc goes back to the list.** A server's page
+shows its status, endpoint (the URL, or the whole command line), transport,
+login, the names its tools go by (`mcp__<server>__<tool>`), its call timeout,
+the full reason it failed or went down — the cause and what it wrote to stderr
+— and its tools; a connected stdio server shows its last lines of stderr
+instead. The `built in` page lists the built-in tools and nothing else.
+
+**Enter on a server's page reconnects it.** The old process or session is
+closed and the server started again in the background; the page shows
+`Reconnecting…` and then how it went, and the chat gets one line —
+`MCP db reconnected · 3 tools`, or the same `⚠` notice a failed start gets. A
+reconnect that fails does not take a server's tools away: one that had tools
+stays `down` with them, showing why the new start failed, and Enter tries
+again. This is also how a chat picks up a login made with `iota mcp login`
+after it started.
+
+## When a server fails
+
+A server that does not connect is reported once, in one line that names it,
+says what went wrong and what to check, and points at `/tools` for the rest:
+
+```text
+⚠ MCP nb: can't reach https://example.com/mcp: connection refused — check the url, and that the server is running · details in /tools
+```
+
+A 404, a 5xx, a web page where the MCP endpoint should be, a command that is
+not installed, a server that exits during startup (with its last stderr line),
+a handshake that never finishes and a rejected header are each worded this
+way. The server's page in `/tools` carries the full cause and its stderr; a
+headless `iota run` prints them under the warning. Every other server loads
+as usual.
+
+**A server that stops mid-session is marked `down`** — as soon as `/tools` is
+opened or a call finds it gone — and the chat says so once:
+
+```text
+⚠ MCP db: exited (its last stderr line: "RuntimeError: database connection lost") — its tools will fail until it is reconnected from /tools · details in /tools
+```
+
+Its tools are not taken away from the model (that would change the tool list
+mid-conversation); a call to one answers that the server has exited and that
+it can be reconnected from `/tools`.
+
+**A tool call nobody answers ends at a deadline**, 30 minutes by default: the
+call is given up and the model is told the server did not answer in time. The
+deadline is a backstop for a server that stopped answering, not a speed limit;
+a server whose tools legitimately run longer can raise it with
+[`tool_timeout_sec`](./config-reference.md#mcp_serversname) in its entry. A
+call that times out does not mark the server down.
