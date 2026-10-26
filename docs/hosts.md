@@ -63,7 +63,7 @@ so the pane shows `iota` before you type anything. In herdr's own terms:
 | The chat | The pane's lifecycle |
 |---|---|
 | a turn is running, or a background job | `working` |
-| the model needs you — an approval banner, an `ask` question | `blocked` |
+| the model needs you — an approval banner, an `ask` question, a [message from another program](./quick-start.md#messaging-a-running-chat) waiting for your yes | `blocked` |
 | your move — from the moment the chat is ready for input, and after a failed turn too | `idle` |
 | exits | released — herdr goes back to screen recognition for whatever runs next |
 

@@ -223,6 +223,7 @@
 .faint { color: var(--iota-term-faint); }
 .green { color: var(--iota-term-green); }
 .teal  { color: var(--iota-term-teal); }
+.tealBold { color: var(--iota-term-teal); font-weight: 700; }
 .amber { color: var(--iota-term-amber); }
 .amberBold { color: var(--iota-term-amber); font-weight: 700; }
 .caretMark { color: var(--iota-term-teal); font-weight: 700; }

@@ -81,13 +81,15 @@ session, the memory, and a lock; the session itself is a bundle under
   process only.
 - **One process at a time.** A second `iota run <name>` while the first is
   still open is refused (`bot coder is open in another iota process (pid
-  4242)`) rather than writing the conversation twice.
+  4242)`) rather than writing the conversation twice. `iota run <name> -m "…"`
+  while it is open hands the running bot the message instead — see
+  [Messaging a running chat](./quick-start.md#messaging-a-running-chat).
 
 What a bot does not do, because it has one session and it runs interactively:
 
 | You try | You get |
 |---|---|
-| `iota run coder -m "…"` | `bot agents are interactive-only for now; run iota run coder` |
+| `iota run coder -m "…"` while the bot is not running | `bot agents are interactive-only for now; run iota run coder` (while it is running, the message is [handed to it](./quick-start.md#messaging-a-running-chat)) |
 | `iota resume <id>` of the bot's session | `session <id> belongs to bot coder; run iota run coder` |
 | `--no-save`, or `no_save: true` on the entry | `--no-save contradicts mode: bot` / `agents.coder: no_save contradicts mode: bot` |
 | `/session` inside the bot | not a command there; and other agents' `/session` neither offers the bot's session nor deletes it |

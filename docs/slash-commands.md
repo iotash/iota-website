@@ -37,7 +37,7 @@ Attached files are sent with your next message, then cleared automatically.
 | Key | What it does |
 |-----|--------------|
 | **Tab** | Cycle through the slash-command completions in the suggestion row. |
-| **Esc** | Cancel the innermost running scope — a streaming reply, or a running `shell` call. |
+| **Esc** | Cancel the innermost running scope — a streaming reply, or a running `shell` call. Background-job notices queued behind a turn you stop wait for your next message instead of starting turns of their own (see [Rate limits and Esc](#rate-limits-and-esc)). |
 | **Ctrl+C** | Cancel the turn. |
 | **Enter** | Send. You can keep typing while a reply streams; queued submits are sent in order. **Ctrl+Enter** sends too. |
 | **Ctrl+J** | Insert a line break. Works in every terminal. |
@@ -90,6 +90,41 @@ arrives is still retried. While the request is out, the status row says
 `Waiting for the model`, and `Waiting for the first token` once the provider
 has answered; its clock counts the whole turn, from the moment you sent the
 message.
+
+### Rate limits and Esc
+
+A finished [background job](./builtin-toolsets.md#background-jobs) normally
+wakes the model on its own. Two things stop that, so that iota does not keep
+starting turns nobody asked for:
+
+- **A rate limit or a usage cap.** When a turn ends in `Rate limited (429)` —
+  after at most three more tries — notices from jobs that finish afterwards
+  wait instead of each starting a new attempt. Each leaves a dim line:
+
+  ```text
+  ⏸ [background job b2 finished] — held until 17:42
+  ```
+
+  At that time iota tries once more with everything waiting (`▶ Trying again
+  with 2 held notice(s)`): when the provider's `retry-after` says it may,
+  otherwise a minute after the refusal, then less and less often, at most
+  every 30 minutes. A try that is refused again leaves one dim line —
+  `⏸ Still rate limited (429) — 2 notice(s) held; next try 18:12` — not
+  another error block. **Sending a message tries at once** and takes the
+  waiting notices with it; switching to another model or provider with
+  `/model` tries at once there. Your own messages are never overtaken by
+  these tries. The provider's own message, with its reset time if it gives
+  one, is shown with the first refusal.
+- **Esc or Ctrl+C.** Notices queued behind the turn you stopped, and any that
+  arrive afterwards, wait the same way (`⏸ … — held; it goes with your next
+  message`) and go with your next message. Nothing restarts until you speak.
+
+A provider that asks to wait more than a minute — with a 429 or any other
+error — is not waited out in silence either: iota stops and holds until then
+(a day at the most, however long it asks), unless the provider explicitly
+insists on being retried. A message [from another
+program](./quick-start.md#messaging-a-running-chat) is not held: it goes at
+once, as something you typed would.
 
 ## Supported file types
 

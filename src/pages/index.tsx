@@ -134,19 +134,25 @@ function Terminal() {
       </div>
       <div className={styles.termBody}>
         {/* Every shape below is what the binary prints (captured from a run against a scripted
-            provider, 2026-09-22): the banner card, the user's row in reverse video, the call row
-            in cyan, the receipt in dim, the table's dim rules, the 2-D math, the image caption. */}
+            provider, 2026-09-22): the banner card, the user's row in reverse video, the call label
+            (since v0.7.5 dim brackets, the tool's name bold cyan, the rest cyan), the receipt in dim,
+            the table's dim rules, the 2-D math, the image caption. */}
         <div className={styles.termCard}>
           <div className={L}>
             <span className={styles.teal}>ι&gt; iota</span>
-            <span className={styles.dim}>{'  v0.7.4'}</span>
+            <span className={styles.dim}>{'  v0.7.5'}</span>
           </div>
           <div className={L}>agent<span className={styles.dim}> · </span>session 8g6h55dk3wsz</div>
           <div className={L}>~/work/iota</div>
         </div>
         <div className={styles.termGapSm} />
         <div className={`${L} ${styles.userRow}`}>❯ why does the resume test hang on linux?</div>
-        <div className={`${L} ${styles.teal}`}>[shell cargo test --test session resume 2&gt;&amp;1 | tail -3]</div>
+        <div className={L}>
+          <span className={styles.dim}>[</span>
+          <span className={styles.tealBold}>shell</span>
+          <span className={styles.teal}> cargo test --test session resume 2&gt;&amp;1 | tail -3</span>
+          <span className={styles.dim}>]</span>
+        </div>
         <div className={`${L} ${styles.dim}`}>{'  ⎿ test resume::linked_worktree ... hung after 60s'}</div>
         <div className={`${L} ${styles.dim}`}>{'    error: test failed, exit 101'}</div>
         <div className={L}>The hang is in the session writer, not the test.</div>
@@ -243,7 +249,7 @@ export default function Home(): React.ReactElement {
           {/* The platform fact is the one place the homepage names Windows; the
               PowerShell line itself is a tab in the box above (design/DESIGN.md §7). */}
           <p className={styles.facts}>
-            v0.7.4&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
+            v0.7.5&nbsp; · &nbsp;MIT&nbsp; · &nbsp;macOS, Linux and{' '}
             <Link className={styles.factLink} to="/docs/install">
               Windows
             </Link>

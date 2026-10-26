@@ -77,6 +77,43 @@ for good, so the next plain resume continues there. A resumed run prints
 `Resumed session <id> (<n> messages)` on stderr, so stdout stays the reply (or
 the JSON report) alone; the new turn is appended only when it succeeds.
 
+### Messaging a running chat
+
+A session can be open in only one iota process. When `iota resume <id> -m "…"`
+finds it open elsewhere — or `iota run <bot> -m "…"` finds that
+[bot](./bot-mode.md) running — it does not open it: it hands the message to
+that chat over a private Unix socket and prints the chat's receipt on stdout,
+one line of JSON as the chat wrote it:
+
+```text
+{"ok":true,"state":"woken"}
+```
+
+| Receipt | Meaning |
+|---|---|
+| `woken` | The chat was idle; the message is its next turn. |
+| `queued` (with `ahead`) | The chat is busy; the message goes in at the next safe point, after `ahead` others. |
+| `held` | Taken, but the chat's tools run without asking (`auto_run`, `auto_write`), so it asks you — *Let the model read it* or *Discard it* — before the model sees it. |
+| `blocked` | Not taken: the chat is waiting for you (an approval, a question, a held message). |
+| `too-large` | Not taken: the message is over 64 KiB. |
+| `refused` | Not taken: another OS user, or a request that is not this protocol (an older or newer one, not JSON, no text). |
+| `flooded` | Not taken: too many messages too fast, the same one again within a minute, or eight already waiting. |
+
+Only `ok` matters to the exit status: a receipt with `"ok":false` is printed
+too, and the run exits 1. The message never interrupts a running tool call. In
+the chat it shows up as a dim `[message from iota -m] …` line, not as
+something you typed, and a leading `/` is never run as a command; the model is
+told it came from another process and is nobody's approval. It is not held
+back after a rate limit or an Esc the way a finished job's notice is (see
+[Rate limits and Esc](./slash-commands.md#rate-limits-and-esc)).
+
+Programs started from the chat — its `shell` calls and its stdio MCP servers —
+find the chat's socket in `IOTA_SOCKET`, and an `iota … -m` run from there
+tells the receiving chat where an answer can go. Only the same OS user can
+connect; there is no network listener. Not available on Windows yet: there,
+`-m` on a session open elsewhere fails with `… is open in another iota process
+(pid N) and cannot be messaged`.
+
 ## Environment Variables
 
 | Variable | Provider |

@@ -108,7 +108,8 @@ must be asked about takes the serial path, because the batch has no approval
 gate. (Every other toolset keeps the conservative rule that only read-only
 calls batch; here the model wrote both command lines, and `&`/`wait`/`xargs
 -P` inside one call were never gated either.) **Presentation**: Group; the
-header is the command itself — `[shell git status]` — with an explicit `cwd`
+header is the command itself — `[shell git status]`, with dim brackets, the
+tool's name in bold cyan and the rest in cyan — with an explicit `cwd`
 folded into the interpreter's idiom (`cd <path> && <cmd>`; `cd <path>; <cmd>`
 under PowerShell), `(background)` in front of a background call and `(outside
 the sandbox)` after an iota call.
@@ -270,7 +271,10 @@ showed — one line, cut past 64 characters — the same rule the `/jobs` rows
 and the status row's job segment follow; the full text is in `/jobs`. If you are sitting at the prompt, the notice wakes the model for one
 turn (your half-typed draft is untouched). If a turn is already running, it
 lands at the next round boundary, like a message you typed while the model was
-working. In `-m` runs the run does not end while a job is still going: the
+working. After a turn you stopped with Esc, or one the provider refused with a
+rate limit, it does not wake the model: it waits — for your next message, or
+for iota's next try after the limit — with a dim `⏸ … — held` line (see [Rate
+limits and Esc](./slash-commands.md#rate-limits-and-esc)). In `-m` runs the run does not end while a job is still going: the
 loop waits for it, hands the model the notice and gives it another round —
 each one counted against `--max-turns`.
 
