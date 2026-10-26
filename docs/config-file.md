@@ -243,11 +243,12 @@ agents:
 `iota config check` loads the files and reports the three layers, warning when
 no `agents.default` exists; `iota config path` prints which files a run reads.
 
-## The four layered parameters
+## The five layered parameters
 
-`context_window`, `effort`, `temperature` and `top_p` can be written in TWO
-layers and changed a third way, in `/model`. Which one wins is one rule, and it
-holds at every moment of a session:
+`context_window`, `effort`, `temperature`, `top_p` and `max_tokens` can be
+written in TWO layers, and all but `max_tokens` changed a third way, in
+`/model`. Which one wins is one rule, and it holds at every moment of a
+session:
 
 | Tier | Says |
 |------|------|
@@ -283,7 +284,7 @@ something you chose.
 
 :::note
 
-`defer_mode` is not one of the four. It lives in `models:` alone and does not
+`defer_mode` is not one of the five. It lives in `models:` alone and does not
 follow the model: the deferring wrapper is built once, at startup, so switching
 to a model that asks for a different mode prints a note saying the session
 keeps the mode it started with — [deferred MCP tools](./mcp.md#deferred-loading)

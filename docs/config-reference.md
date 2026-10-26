@@ -201,7 +201,7 @@ shape survives (`openrouter:anthropic/claude-3.5-sonnet`).
 
 The mapping form takes these thirteen keys; `context_window`, `effort`,
 `temperature`, `top_p` and `max_tokens` are defaults an agent may
-[override](#the-four-layered-parameters).
+[override](#the-five-layered-parameters).
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
@@ -298,17 +298,17 @@ What follows from `mode: bot`:
   it carry on with nobody there — the commented-out bot in the starter above
   sets both, with the sandbox on.
 
-### The four layered parameters
+### The five layered parameters
 
-`context_window`, `effort`, `temperature` and `top_p` may be written in both
-`models:` and `agents:` — the only keys that may, with `max_tokens`, which
-follows the same rule — and the rule is one line:
+`context_window`, `effort`, `temperature`, `top_p` and `max_tokens` may be
+written in both `models:` and `agents:` — the only keys that may — and the
+rule is one line:
 the agent's value when it has one, else the model's, else the built-in
 default, evaluated when a session starts and again whenever `/model` switches
 model. It is exactly **one** level of inheritance, deliberately not a chain:
 an agent that knows it keeps long conversations says `context_window: 400k`
 once instead of forking a `models:` entry per usage. How a value you set by
-hand in `/model` fits in is on [the config file](./config-file.md#the-four-layered-parameters).
+hand in `/model` fits in is on [the config file](./config-file.md#the-five-layered-parameters).
 
 ### Booleans
 
@@ -381,7 +381,7 @@ written, and `${}` is not a reference at all. Names are case-sensitive.
 
 Everything else is configured in the YAML file. Beside the API keys
 ([above](#providersname)) and `NO_COLOR` ([Your first
-run](./quick-start.md#environment-variables)), these four are for the cases a
+run](./quick-start.md#environment-variables)), these are for the cases a
 config file cannot cover:
 
 | Variable | What it does | When you would use it |
@@ -390,6 +390,14 @@ config file cannot cover:
 | `IOTA_GIT_BASH_PATH` | Windows only: the `bash.exe` of Git Bash. | Git for Windows is installed somewhere iota does not look (not next to the `git.exe` on `PATH`, not in a default install root), or you want an MSYS2 bash. |
 | `IOTA_LOG` | A file path; iota appends its diagnostic log there (`tracing` events: iota at `DEBUG`, its libraries at `INFO`). | Something misbehaves — an MCP server, a connection — and you want to see what happened underneath. Nothing reaches this log unless the variable is set; warnings you need to act on are always shown in the terminal regardless. |
 | `IOTA_DEBUG_REGION` | A file path; iota appends a trace of every operation on the terminal's live region there. | You are reporting (or fixing) a rendering glitch — a stray blank row, a misplaced line — and need to show which layer drew it. Developer tooling; most people never need it. |
+
+And one iota **sets** rather than reads. An interactive chat gives every
+program it starts — its `shell` calls and its stdio MCP servers — the path of
+its private Unix socket:
+
+| Variable | What it holds | When you would use it |
+|---|---|---|
+| `IOTA_SOCKET` | The socket of the chat that started the program. Set only when the chat could open one — not on Windows, not in a headless run. | A script or a server the model started wants to tell that chat something: `iota resume <id> -m "…"` from inside it also tells the receiving chat where an answer can go. See [Messaging a running chat](./quick-start.md#messaging-a-running-chat). |
 
 **The stream idle timeout is a constant, not a setting.** A streamed response
 that sends no byte for **300 seconds** fails with `Response stalled` and is not
@@ -420,7 +428,7 @@ file. In order of precedence:
 | | `agents.a.tools.delegate` | `agents.a.tools.delegate: the `delegate` toolset was removed — run child agents from bash instead (see README)` |
 | an unknown toolset | `agents.a.tools.web` | `agents.a.tools.web: unknown toolset (want shell, skills, code, ask)` |
 
-The four layered parameters are valid in both `models:` and `agents:`, so
+The five layered parameters are valid in both `models:` and `agents:`, so
 neither layer reports the other for them. A `models:` shorthand and a `tools:`
 value are not mappings the audit owns, so their contents are checked by the
 code that decodes them — the messages above under each key.
