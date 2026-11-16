@@ -59,6 +59,55 @@ agents:
     mcp_servers: [github]    # load only these MCP servers; [] = none; key absent = all
 ```
 
+## Approval
+
+**Every MCP tool call asks first**, like a file edit or a shell command:
+`github:create_issue <a summary of its arguments> — allow?`, with allow once / allow for
+this session / deny. A server process is not sandboxed — it can read, write,
+fetch and post with your permissions — and iota does not guess which tools are
+safe from their names or descriptions. "Allow for this session" covers that
+one tool until `/new` or a `/session` resume; the server's other tools still
+ask.
+
+For a server you trust to act unasked, set `auto_run: true` on its entry
+(default `false`):
+
+```yaml
+mcp_servers:
+  filesystem:
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
+    auto_run: true           # its tools run without asking, in a chat and in -m
+```
+
+A run with nobody to ask (`-m`) refuses a call to a server without `auto_run`,
+and the model is told which key to set:
+
+```text
+mcp__github__create_issue was not executed: the tools of MCP server "github" need the user's approval, which this non-interactive run cannot ask for; set `mcp_servers.github.auto_run: true` to allow it.
+```
+
+A `--mcp` server always asks, so `-m … --mcp …` cannot run its tools: write it
+as an `mcp_servers` entry with `auto_run: true` instead.
+
+:::warning
+
+**Upgrading from before v0.9.0**, when MCP tools ran unasked: a script or CI
+job that calls MCP tools in `-m` needs `auto_run: true` on each server it
+relies on.
+
+:::
+
+## Servers in a project file
+
+A project's `./.iota.yaml` is read only once you have
+[trusted it](./config-file.md#trusting-a-project-config), and until then none
+of its servers is started or logged in to. `iota mcp list --probe` lists an
+untrusted file's servers without starting them (`not probed (project config
+not trusted)`), and `iota mcp login <name>` refuses one: `cannot log in to
+<name>: it is declared in project config … (it is not trusted): run `iota
+config trust` to trust it, or pass it with -c`.
+
 ## Managing servers: `iota mcp`
 
 `iota mcp` edits the `mcp_servers:` block from the command line, so a server is
