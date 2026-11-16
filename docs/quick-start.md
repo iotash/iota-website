@@ -15,6 +15,39 @@ export OPENAI_API_KEY=…   # or put `key:` in the file afterwards
 iota                      # writes ~/.iota.yaml (one provider, one model, agents.default) and runs agents.default
 ```
 
+## The chat screen
+
+iota takes the whole terminal window, the way `vim` or `less` do: the
+conversation fills it and the input box stays at the bottom.
+
+- **Scroll** with the mouse wheel or **PgUp**/**PgDn**; **Ctrl+End** goes back
+  to the latest output. **Ctrl+R** searches the conversation.
+- **Select** by dragging over the conversation (double-click a word,
+  triple-click a line); letting go copies it to your clipboard. Shift-drag
+  (Option-drag in iTerm2) is the terminal's own selection.
+- **Your terminal's scrollback** does not show the conversation while iota
+  runs. Press **Ctrl+O** to write it there (any key comes back); when you quit
+  — Ctrl+D or `/exit` — it is written there for you.
+
+Every key is on [Slash commands](./slash-commands.md#keys), and
+[`mouse: false`](./config-reference.md#mouse) leaves the mouse to the terminal.
+
+## A repository with its own `.iota.yaml`
+
+A project can ship a `.iota.yaml` with its own agents and MCP servers. The
+first time you run iota there, it shows what the file would do and asks
+`Trust it? [t]rust / [N]ot now`; nothing in it runs until you say `t`, and it
+asks again when the file changes. For a script or CI, where nobody answers,
+trust it once from the directory:
+
+```bash
+iota config trust
+```
+
+Until then a headless run skips the file with a warning and uses
+`~/.iota.yaml`. See [Trusting a project
+config](./config-file.md#trusting-a-project-config).
+
 ## Usage
 
 ```bash
@@ -29,7 +62,7 @@ iota [command] [flags]
 | `iota run` | The same as a bare `iota` |
 | `iota list [agents\|models\|providers\|sessions]` | What the config declares (no argument: `agents`); `iota list models <agent>` shows one agent's model and choices |
 | `iota resume [<id>]` | Resume a saved session — any unique id prefix; with no id, pick from a list |
-| `iota config [check\|path\|init]` | Validate the config, print which files it reads, or write a starter one (no argument: `check`) |
+| `iota config [check\|path\|init\|trust\|untrust]` | Validate the config, print which files it reads, write a starter one, or trust / forget the project's `.iota.yaml` (no argument: `check`) |
 | `iota version` | Print the version (`--version` does the same) |
 
 The positional argument is the **command**, never a name from your config, so

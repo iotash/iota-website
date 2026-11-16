@@ -46,7 +46,7 @@ Attached files are sent with your next message, then cleared automatically.
 | **Enter** | Send. You can keep typing while a reply streams; queued submits are sent in order. **Ctrl+Enter** sends too. |
 | **Ctrl+J** | Insert a line break. Works in every terminal. |
 | **Alt+Enter**, **Shift+Enter** | Insert a line break where the terminal reports the modifier (below); elsewhere they are a plain Enter and send. |
-| **Ctrl+D**, `/exit` | Quit. Ctrl+C at an empty prompt quits too. |
+| **Ctrl+D**, `/exit` | Quit. Ctrl+C at the prompt quits too. |
 | **PgUp** / **PgDn** | Scroll the conversation half a screen (Fn+↑/↓ on a MacBook). |
 | **Ctrl+Home** / **Ctrl+End** | Go to the first line of the conversation / back to the latest output. |
 | **Ctrl+R** | Search the conversation (below). |
