@@ -1,7 +1,7 @@
 ---
 id: hosts
 title: Terminal hosts
-description: What iota tells the terminal it runs in — the plain terminal's progress and notification sequences, herdr's pane lifecycle, cmux's status row — and what the host tells the model back.
+description: What iota tells the terminal it runs in — the plain terminal's progress and notification sequences, herdr-core's in-band state, herdr's pane lifecycle, cmux's status row — and what the host tells the model back.
 sidebar_label: Terminal hosts
 ---
 
@@ -39,8 +39,8 @@ speaks through two escape sequences most modern terminals understand:
 | your move | OSC 9;4 with state 0 | nothing |
 
 And the attention ping: when the model needs you, or a turn ends while the
-terminal is not focused, one OSC 9 notification carries a short line: which
-tool wants to modify files, the failed turn's headline, or the reply's first
+terminal is not focused, one OSC 9 notification carries a short line:
+`<tool> needs approval`, the failed turn's headline, or the reply's first
 words. It is silent while the terminal is
 focused — whoever is already watching needs no bell — and `notify: false` on
 the agent silences it entirely. The progress indicator is not gated: it is
@@ -49,6 +49,37 @@ what the tab looks like, not an interruption.
 The terminal's background colour is also asked once, at start-up (OSC 11), to
 pick the light or dark palette. A multiplexer that draws its own panes answers
 this itself — herdr does — so the answer describes what you actually see.
+
+## herdr-core (`hc`)
+
+herdr-core, `hc`, is the terminal core behind herdr's desktop app — a product
+of its own, not a new version of the herdr multiplexer below; iota supports
+both. hc reads a program's state from the program's own output, so iota
+reports it in-band, with OSC 7501:
+
+| The chat | The state hc sees |
+|---|---|
+| a turn is running, or a background job | `working` |
+| the model needs you — an approval, a question, any open dialog | `blocked` |
+| your move | `idle` |
+| the last turn failed | `error` |
+| exits | cleared |
+
+So `hc get` and `hc wait` see where the chat is, and `hc send` refuses to type
+into an open approval. A headless `-m` run reports too, writing to the terminal
+even when its output goes to a file.
+
+iota recognises hc by asking the terminal, not by reading the environment:
+with `HC_TERMINAL_ID` set it sends one query at start-up and writes OSC 7501
+only when the terminal answers it. Inside a tmux in an hc terminal the answer
+does not come, and the tab keeps the plain terminal's progress bar instead. An
+hc terminal started from a herdr pane reports to hc, not to that pane.
+
+The commands iota runs do not get `HC_TERMINAL_ID`, so an `iota -m` the model
+starts leaves the chat's state alone (the model is told to pass the terminal
+id to `hc` explicitly). A program the model runs that writes its own OSC 7501
+straight to the terminal can still replace the chat's state until the chat's
+next change.
 
 ## herdr
 
@@ -63,7 +94,7 @@ so the pane shows `iota` before you type anything. In herdr's own terms:
 | The chat | The pane's lifecycle |
 |---|---|
 | a turn is running, or a background job | `working` |
-| the model needs you — an approval banner, an `ask` question, a [message from another program](./quick-start.md#messaging-a-running-chat) waiting for your yes | `blocked` |
+| the model needs you — an approval banner, an `ask` question, a [message from another program](./quick-start.md#messaging-a-running-chat) waiting for your yes, or any open picker or confirmation (`/model`, `/new`, `/export`…) | `blocked` |
 | your move — from the moment the chat is ready for input, and after a failed turn too | `idle` |
 | exits | released — herdr goes back to screen recognition for whatever runs next |
 
@@ -131,7 +162,7 @@ another window's after that, and shared by every pane, so a status row set
 through it would land on one row for all of them.
 
 iota therefore talks to the innermost host only. Detection runs from the
-inside out — herdr, then cmux — and the first match is kept, with the plain
+inside out — herdr-core, then herdr, then cmux — and the first match is kept, with the plain
 terminal behind it: a herdr pane inside a cmux window reports to herdr, never
 runs a `cmux` command, and tells the model `host: herdr` alone. The plain
 terminal still carries what the detected host does not — the ping, the
