@@ -134,9 +134,11 @@ function Terminal() {
       </div>
       <div className={styles.termBody}>
         {/* Every shape below is what the binary prints (captured from a run against a scripted
-            provider, 2026-09-22): the banner card, the user's row in reverse video, the call label
-            (since v0.7.5 dim brackets, the tool's name bold cyan, the rest cyan), the receipt in dim,
-            the table's dim rules, the 2-D math, the image caption. */}
+            provider, 2026-09-22; the frame redrawn for v0.10.0): the banner card, the user's block
+            in reverse video behind a gray ▌ bar on every row, the call label (dim brackets, the
+            tool's name bold cyan, the rest cyan), the receipt in dim, the table's dim rules, the 2-D
+            math, the image caption, then the frame — solid rule, the input with no prompt glyph,
+            solid rule, the status row, both from column 0. */}
         <div className={styles.termCard}>
           <div className={L}>
             <span className={styles.teal}>ι&gt; iota</span>
@@ -146,7 +148,7 @@ function Terminal() {
           <div className={L}>~/work/iota</div>
         </div>
         <div className={styles.termGapSm} />
-        <div className={`${L} ${styles.userRow}`}>❯ why does the resume test hang on linux?</div>
+        <div className={`${L} ${styles.userRow}`}><span className={styles.userBar}>▌</span> why does the resume test hang on linux?</div>
         <div className={L}>
           <span className={styles.dim}>[</span>
           <span className={styles.tealBold}>shell</span>
@@ -184,16 +186,16 @@ function Terminal() {
           so the 60 s budget is exceeded by one retry, <span className={styles.teal}>2⁵ = 32</span> s of it.
         </div>
         <div className={styles.termGapSm} />
-        <div className={`${L} ${styles.userRow}`}>❯ paint the evening this fix ships: dusk over two hills</div>
+        <div className={`${L} ${styles.userRow}`}><span className={styles.userBar}>▌</span> paint the evening this fix ships: dusk over two hills</div>
         <TermPicture />
         <div className={`${L} ${styles.dim}`}>{'  🖼 saved: /home/me/.iota/images/20260922-183012-1.png'}</div>
         <div className={styles.termGapSm} />
         <div className={styles.termComposer}>
           <div className={L}>
-            ❯ <span className={styles.caret} />
+            <span className={styles.caret} />
           </div>
         </div>
-        <div className={`${L} ${styles.dim}`}>{'  claude-sonnet-4 · ↑ 4k ↓ 253 · 1% / 200k'}</div>
+        <div className={`${L} ${styles.dim}`}>claude-sonnet-4 · ↑ 4k ↓ 253 · 1% / 200k</div>
       </div>
     </div>
   );

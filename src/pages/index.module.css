@@ -229,12 +229,14 @@
 .caretMark { color: var(--iota-term-teal); font-weight: 700; }
 .kw    { color: var(--iota-term-amber); }
 
-/* The user's row is reverse video in the real transcript. */
+/* The user's block is reverse video from column 0 to the row's end; column 0 is a gray ▌
+   bar inside the reversed span, so the block's left edge is a gray column on every row. */
 .userRow {
   display: block;
   color: var(--iota-term-bg);
   background-color: var(--iota-term-text);
 }
+.userBar { color: var(--iota-term-dim); }
 
 /* Half-block rows tile only at a line-height of one em — and at that height the glyph's box
    overhangs its line, so the block keeps a margin clear of the rows around it. */
@@ -285,8 +287,8 @@
 .termComposer {
   margin-top: 8px;
   padding: 2px 0;
-  border-top: 1px dashed var(--iota-term-faint);
-  border-bottom: 1px dashed var(--iota-term-faint);
+  border-top: 1px solid var(--iota-term-faint);
+  border-bottom: 1px solid var(--iota-term-faint);
 }
 
 .caret {
