@@ -15,10 +15,40 @@ and errors, is on the [configuration reference](./config-reference.md).
 ## Config lookup order
 
 1. `~/.iota.yaml` or `~/.iota.yml` (global)
-2. `./.iota.yaml` or `./.iota.yml` (project-local, merges over global)
+2. `./.iota.yaml` or `./.iota.yml` (project-local, merges over global — only
+   once you [trust it](#trusting-a-project-config))
 3. `-c/--config <path>` (explicit, highest priority, used alone)
 
 Same-name entries in later files override earlier ones, whole entry at a time.
+
+## Trusting a project config
+
+A `.iota.yaml` that came with a repository can start MCP servers, send your
+key to another `url` and turn the sandbox off, so iota does not use it just
+because you ran iota in that directory. The first time, iota shows what the
+file would do and asks once, before any of it runs:
+
+```text
+/Users/you/project/.iota.yaml is a project config you have not trusted.
+It sets:
+  mcp_servers.db: runs npx -y @acme/db-mcp
+Trust it? [t]rust / [N]ot now
+```
+
+Answer `t` and it is used from now on; Enter skips it for this run. iota
+remembers the file's **content**, not just its path: when the file changes —
+your edit or a `git pull` — it asks again. A run with nobody to ask (`-m`, a
+script, a bot started from one) skips an untrusted file with one warning and
+goes on with `~/.iota.yaml`. For CI and scripted setups:
+
+```bash
+iota config trust      # trust ./.iota.yaml as it is now
+iota config untrust    # forget it; the next run asks again
+iota -c .iota.yaml …   # or name the file: -c is always used as named
+```
+
+`iota config path` marks a project file a run would skip. The details are on
+[the configuration reference](./config-reference.md#trusting-a-project-config).
 
 ## Priority
 
