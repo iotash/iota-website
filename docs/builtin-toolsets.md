@@ -17,6 +17,8 @@ editing project files), `skills` (skill activation; auto-enabled by
 in interactive sessions — disable with `ask: false`).
 
 ```yaml
+write_roots: [~/.cache]      # top level: extra writable directories, every agent
+
 agents:
   claude:
     model: "anthropic:claude-sonnet-4-20250514"
@@ -29,7 +31,6 @@ agents:
     tools:
       shell:
         network: true        # allow network inside the sandbox
-        write: [~/.cache]    # extra sandbox-writable paths
       code:
         auto_write: true     # no confirmation before edit_file/write_file
       ask: false             # no choose/confirm, even interactively
@@ -45,9 +46,11 @@ facts hold for all of them:
   `off`) disables it. A set name that is not one of the four fails the config
   load; a set whose value does not decode is a startup warning (`toolset
   "shell": … (ignored)`) and the set is left out.
-- **Approval** is a per-call question. Interactively the answer is allow once /
-  allow for this session / deny; a denied call does not run and the model is
-  told so. A non-interactive `-m` run has nobody to ask and refuses every gated
+- **Approval** is a per-call question: `<tool> <what it does> — allow?`, and
+  a host such as herdr is told `<tool> … needs approval`. Interactively the
+  answer is allow once / allow for this session / deny; a denied call does not
+  run and the model is told so. "Allow for this session" lasts until `/new` or
+  a `/session` resume, not until iota exits. A non-interactive `-m` run has nobody to ask and refuses every gated
   call with: `<tool> was not executed: it requires interactive approval, which
   is unavailable in this non-interactive run. Set the toolset's auto-approve
   option (tools.code.auto_write / tools.shell.auto_run) to permit it here.`
@@ -74,10 +77,15 @@ every platform and under every interpreter.
 | `sandbox` | `auto` \| `off` | `auto` | `auto` sandboxes every call when the OS has a sandbox (Seatbelt on macOS, bubblewrap on Linux) and runs unsandboxed with approval where it has none; `off` never sandboxes. An empty value reads as `auto`; anything else refuses the set: `sandbox must be "auto" or "off", got "on"` |
 | `network` | boolean | `false` | whether sandboxed commands may use the network. Meaningless without a sandbox |
 | `auto_run` | boolean | `false` | run every call without approval, sandboxed or not — including the [iota exception](#the-iota-exception) and every call of an unsandboxed set. What makes `-m` runs able to use the tool where no sandbox exists |
-| `write` | list of paths | `[]` | extra directories the sandbox may write to. A leading `~` (alone or `~/`) is the home directory; a relative path is made absolute against the process working directory; empties are dropped |
+
+Extra writable directories are not a `shell` key: list them in the top-level
+[`write_roots:`](#write-roots), which the `code` set shares. A config that
+still has `tools.shell.write` loses the shell tool, with the warning
+``toolset "shell": `write` is gone — list extra writable roots in the
+top-level `write_roots:` (shared by the shell and code sets) (ignored)``.
 
 A value that is not a mapping is refused: `config must be a mapping (sandbox,
-network, auto_run, write): <decode error>`. On Windows a machine with no
+network, auto_run): <decode error>`. On Windows a machine with no
 interpreter at all refuses the set too — `no shell interpreter found: tried Git
 Bash (install Git for Windows or set IOTA_GIT_BASH_PATH), pwsh.exe,
 powershell.exe and cmd.exe — set IOTA_SHELL to name one` — where Unix registers
@@ -145,10 +153,20 @@ and approval where there is none:
   with your permissions and asks unless `auto_run` waives it.
 - **Writes are confined** to this set of directories, in this order, duplicates
   dropped: the project root; the run's temp directory; `/tmp`; the cache
-  directory (created if missing); then every `write:` path, made absolute.
-  Everything else fails inside the command with a permission error
-  (`Operation not permitted`), which the [harness prompt](./system-prompt.md)
-  tells the model to report rather than work around.
+  directory (created if missing); then every [`write_roots:`](#write-roots)
+  entry. Everything else fails inside the command with the OS's error
+  (`Operation not permitted` on macOS, `Read-only file system` on Linux),
+  which the [harness prompt](./system-prompt.md) tells the model to report
+  rather than work around.
+- **The [protected paths](#protected-paths) stay read-only** even inside those
+  directories: `.iota.yaml`, `.git/hooks`, `.git/config` and the rest. So
+  `git config …`, `git remote add`, `git init` in a folder that is not a
+  repository yet, `git push -u`, `git submodule add` and hook installers
+  (husky, pre-commit, lefthook) fail in the sandbox; `git add`, `commit`,
+  `checkout` and `fetch` work. Run those yourself, or set `sandbox: off` and
+  approve each command. On Linux the sandbox can only protect a file that
+  already exists: a sandboxed command can still create a missing
+  `.iota.yaml`.
 - **Network is blocked** unless `network: true`.
 - **Sandboxed calls run without prompting.** Where no sandbox is available or
   with `sandbox: off`, every call asks instead (allow once / allow for this
@@ -157,17 +175,21 @@ and approval where there is none:
 The tool's description tells the model which regime it is in: `Commands run
 inside an OS sandbox: file writes are confined to the project root and
 temp/cache directories (writes elsewhere fail with permission errors), and
-network access is BLOCKED.` — or `…is allowed.` with `network: true` — versus
-`Commands run WITHOUT a sandbox on this system, with the user's full
-permissions — be conservative.`
+network access is BLOCKED.` — or `…is allowed.` with `network: true` —
+followed by one sentence naming the protected files and the commands that
+fail on them, so the model asks you instead of fighting the sandbox. With
+`write_roots:` set, the line names them: `confined to the project root, the
+extra write roots (/Users/you/scratch, …) and temp/cache directories`.
+Unsandboxed, it reads `Commands run WITHOUT a sandbox on this system, with
+the user's full permissions — be conservative.`
 
 ### The iota exception
 
 One command line leaves a sandboxed set: **iota itself**. A call whose first
-word is the running binary — `iota mcp add …`, `iota mcp login <name>`, a child
-agent's `iota run <agent> -m "<task>"`, `/opt/homebrew/bin/iota …` — is spawned
-without the sandbox, because what it does (write a config file in `$HOME`, open
-a browser, reach an API) is exactly what the sandbox exists to refuse, and the
+word is the running binary — `iota mcp login <name>`, a child agent's
+`iota run <agent> -m "<task>"`, `/opt/homebrew/bin/iota …` — is spawned
+without the sandbox, because what it does (store a login's token, open a
+browser, reach an API) is exactly what the sandbox exists to refuse, and the
 binary is one you installed. The rule is conservative by construction:
 
 - the **first word**, read with POSIX quoting (`'…'`, `"…"`, `\`), must resolve
@@ -177,10 +199,16 @@ binary is one you installed. The rule is conservative by construction:
 - the rest of the line must be **one simple command**: a pipe (`|`), a chain
   (`&&`, `||`, `;`, `&`), a newline, a command substitution (`$(…)`, a
   backtick) anywhere outside single quotes keeps the whole line in the sandbox
-  (`iota mcp list | head` stays in). Redirections (`>`, `<`, `2>&1`, `&>`) are
-  allowed: they change where iota's output goes, not what runs.
+  (`iota mcp list | head` stays in), and so does an expansion the shell would
+  decide — `$`, `*`, `?`, `[` or `{` outside quotes, `$` inside double quotes.
+  Redirections (`>`, `<`, `2>&1`, `&>`) are allowed: they change where iota's
+  output goes, not what runs;
+- the commands that write a config or the trust record never leave:
+  `iota config trust`, `untrust` and `init`, `iota mcp add` and `remove` stay
+  in the sandbox, where the write is refused. The model asks you to run them
+  in your own terminal.
 
-The only effect is the missing sandbox: `network:` and `write:` are the
+The only effect is the missing sandbox: `network:` and `write_roots:` are the
 sandbox's settings and do not apply. **Approval is not waived**: a sandboxed
 set without `auto_run` asks about such a call the way an unsandboxed set asks
 about every call, and the prompt and the call header carry `(outside the
@@ -306,16 +334,18 @@ binary's.
 
 The coding loop: `glob` and `grep` locate files, `list_dir` explores,
 `read_file` returns line-numbered content, and `edit_file` (exact, unique
-string replacement) / `write_file` change files. Everything is confined to the
+string replacement) / `write_file` change files. **Reading is open, writing is
+confined**: the readers take any path, while the writers write inside the
 **project root** — the git root of the working directory, or the working
-directory itself outside a repository. Verification — builds, tests — goes
-through the `shell` set, so enable it alongside.
+directory itself outside a repository — and the [`write_roots:`](#write-roots)
+directories, and ask you about anything else. Verification — builds, tests —
+goes through the `shell` set, so enable it alongside.
 
 ### Configuration
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `auto_write` | boolean | `false` | `edit_file` and `write_file` run without approval — and therefore in `-m` runs, which otherwise refuse them |
+| `auto_write` | boolean | `false` | `edit_file` and `write_file` run without approval inside the project root and the `write_roots:` — and therefore in `-m` runs, which otherwise refuse them. A write outside them, or to a protected path, still asks |
 | `read_only` | boolean | `false` | leave the two writers out entirely: the model sees `glob`, `grep`, `list_dir` and `read_file` alone. A tool the model cannot see is never attempted and never refused — the reviewer's setting |
 
 Both together are refused: `read_only and auto_write contradict each other:
@@ -324,50 +354,56 @@ mapping: `config must be a mapping (auto_write, read_only): <decode error>`.
 
 Shared by all six tools:
 
-- **The path jail is lexical.** A `path` is resolved against the project root
-  (an absolute one is accepted when it lies inside), cleaned, and refused when
-  it points outside: `path is outside the project root (/Users/you/project):
-  ../secrets`. Symlinks are not followed for the check and the target need not
-  exist, so `write_file` can create one. A missing path is `missing required
-  argument: path`; a directory argument that is not one is `not a directory:
-  <as written>`.
+- **Paths.** A relative `path` is resolved against the project root, an
+  absolute one is taken as written, and either is cleaned. The readers accept
+  any path — `../other-repo`, `/etc/hosts` — and follow a symlink wherever it
+  leads; a result outside the project root is shown by its absolute path
+  (`~/…` in a header). The writers check where the file **really** is (see
+  [Where the writers may write](#where-the-writers-may-write)). A missing path
+  is `missing required argument: path`; a directory argument that is not one
+  is `not a directory: <as written>`.
 - **The read ledger.** `read_file` records the modification time of every file
   it serves; `edit_file`, and `write_file` on an existing file, require that
   record and refuse when the file has changed since — the model can never
   blind-overwrite your edits.
 - **Output cap** 64 KB (65,536 bytes) per call.
 - **Approval**: the four readers never ask; the two writers ask unless
-  `auto_write: true`. **Parallel**: the readers always, the writers never.
+  `auto_write: true` — and always ask outside the roots or for a protected
+  path. **Parallel**: the readers always, the writers never.
   **Presentation**: readers Group, writers Expanded — a successful edit posts
   the unified diff as the call's block; the model's result text stays short.
   The header of a file tool is its path (`[read_file src/main.rs]`).
 
 ### `glob`
 
-Finds files by name pattern under the project root, newest first. `.git` and
-anything the root `.gitignore` matches are excluded.
+Finds files by name pattern under the project root (or the `path` you name),
+newest first. `.git` and anything the containing root's `.gitignore` matches
+are excluded.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
 | `pattern` | string | yes | a glob over root-relative paths with `*`, `?` and `**`. A pattern without `/` is prefixed with `**/`, so `*.go` matches at any depth. Empty: `missing required argument: pattern`; malformed: `invalid glob pattern: <pattern>` |
-| `path` | string | no — the root | the directory to search, relative to the root |
+| `path` | string | no — the root | the directory to search, relative to the root or absolute |
 
 Returns one root-relative path per line, newest modification first (ties keep
 the walk's lexical order). At most **200** results are shown, out of at most
 10,000 candidates collected: `[showing the 200 newest of N matches; narrow the
 pattern to see the rest]`. Nothing found is `no files match <pattern>`, not an
-error.
+error. The walk itself stops after visiting 100,000 files and folders — `[stopped
+after visiting 100000 entries; narrow "path" to search further]` — and at once
+when you press **Esc**: what it found so far, then `[search cancelled]`. So a
+search started at `/` cannot run away.
 
 ### `grep`
 
-Searches file contents under the project root with a regular expression.
-Binary files (a NUL in the first 8,000 bytes), files over 10 MB, `.git` and
-root-`.gitignore` matches are skipped.
+Searches file contents under the project root (or the `path` you name) with a
+regular expression. Binary files (a NUL in the first 8,000 bytes), files over
+10 MB, `.git` and the containing root's `.gitignore` matches are skipped.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
 | `pattern` | string | yes | the regular expression, in Rust `regex` syntax (RE2-like: no backreferences or lookaround). Not trimmed — a leading space is part of the pattern. Empty: `missing required argument: pattern`; malformed: `invalid regular expression: <error>` |
-| `path` | string | no — the root | the directory to search, relative to the root |
+| `path` | string | no — the root | the directory to search, relative to the root or absolute |
 | `include` | string | no | a filename glob filter. Without `/` it matches the basename (`*.go`); with one, the root-relative path (`cmd/**`). Malformed: `invalid include pattern: <include>` |
 | `context` | integer | no — `0` | lines of context around each match, clamped to `0`–`10` |
 
@@ -375,16 +411,19 @@ Output lines are `path:line: text` for a match and `path:line- text` for a
 context line, in ascending line order per file, each line clipped at 500 bytes
 with `…`. The search stops after **100** matches or when the output passes 64
 KB: `[stopped after N matches; refine the pattern or use include to narrow the
-search]`. Nothing found is `no matches for <pattern>`.
+search]`. Nothing found is `no matches for <pattern>`. Like `glob`, it stops
+after visiting 100,000 entries and on **Esc** (`[search cancelled]`); it also
+stops after reading 256 MB of files in one call: `[stopped after reading 256 MB
+of files; narrow "path" to search further]`.
 
 ### `list_dir`
 
-Lists one directory level under the project root: directories with a trailing
+Lists one directory level: directories with a trailing
 `/`, files with their size, sorted by name.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
-| `path` | string | no — the root | the directory to list, relative to the root |
+| `path` | string | no — the root | the directory to list, relative to the root or absolute |
 
 ```text
 src/
@@ -403,7 +442,7 @@ a file is what allows it to be edited afterwards.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
-| `path` | string | yes | the file, relative to the root |
+| `path` | string | yes | the file, relative to the root or absolute |
 | `offset` | integer | no — `1` | the 1-based first line. Past the end: `offset N is past the end of <path> (M lines)` |
 | `limit` | integer | no — all remaining | how many lines to return |
 
@@ -425,7 +464,7 @@ outside the edited span is never touched.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
-| `path` | string | yes | the file, relative to the root |
+| `path` | string | yes | the file, relative to the root or absolute |
 | `old_string` | string | yes | the exact text to replace, whitespace and indentation included. Must be unique in the file unless `replace_all` is set — the model extends it with surrounding lines to disambiguate |
 | `new_string` | string | yes | the replacement |
 | `replace_all` | boolean | no — `false` | replace every occurrence instead of requiring uniqueness |
@@ -452,7 +491,7 @@ is told to prefer `edit_file` for changes inside an existing file.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
-| `path` | string | yes | the file, relative to the root |
+| `path` | string | yes | the file, relative to the root or absolute |
 | `content` | string | yes | the full content. An empty string is valid; a missing or non-string value is `missing required argument: content` |
 
 A **new** file needs no prior read and is created with mode `0644`; an
@@ -462,6 +501,99 @@ directory`) or not a regular file (`<path> is not a regular file`) is refused.
 On success: `wrote X KB to <path> (created)` or `(overwritten)`, and the diff
 against the previous content — unless the old file was too large to read
 whole, in which case no diff is shown rather than a lying one.
+
+### Where the writers may write
+
+`edit_file` and `write_file` look up where the file **really** is — every
+symlink resolved, the nearest existing folder for a file not made yet — and
+sort the call into one of four cases:
+
+| Case | In a chat | In a `-m` run |
+|---|---|---|
+| inside the project root or a `write_roots:` directory | asks unless `auto_write: true` | refused unless `auto_write: true` |
+| outside every root | **always asks**, even with `auto_write: true` | refused: list the directory in `write_roots:` |
+| a [protected path](#protected-paths) | **always asks**, allow once only | refused: make the change yourself |
+| the real location cannot be worked out | refused | refused |
+
+A symlink inside the project that leads out of every root is a write outside
+every root: the prompt shows where the link really points, and the write
+lands there. With [`outside_writes: refuse`](#outside-writes) both the outside
+and the protected rows are refused without a prompt.
+
+**The prompt for an outside write** names the real location, absolute, and
+marks it: `write_file /Users/you/notes/todo.md (outside the project root) —
+allow?`. Its middle option is `Allow in /Users/you/notes for this session`:
+that one directory (not the folders under it), through that one tool. A grant
+for one directory does not cover another, and a grant for writes inside the
+project does not cover an outside one.
+
+**The refusals** the model reads: `path is outside the project root
+(/Users/you/project): ../notes/todo.md` — with `) and the extra write roots
+(…` inside the parentheses when `write_roots:` lists any — followed in a `-m`
+run by `— writing there needs the user's approval, which this non-interactive
+run cannot ask for; list its directory in the top-level `write_roots:` to
+allow it`. A path whose real location cannot be worked out is `cannot verify
+<path> inside the project root (…)`. The writers' descriptions name the same
+roots, and in a chat add `Outside that, the user is asked to approve a write
+there first.`, so the model does not take a refusal as final.
+
+#### `write_roots:` {#write-roots}
+
+A **top-level** key — beside `providers:` and `agents:`, not under `tools:` —
+listing directories outside the project that both the code writers and a
+sandboxed shell may write. One list for both, every agent:
+
+```yaml
+write_roots:
+  - ~/scratch          # ~ is your home
+  - ../shared-lib      # relative to the project root
+```
+
+Every config file of the stack adds its entries. A blank entry fails the
+config load (`write_roots[0]: …`); a directory that does not exist yet is
+accepted; a directory whose real location cannot be worked out refuses the
+`code` set (`cannot resolve the write root <path>`). The model is told the
+list in the writers' and the shell's descriptions. `agents.<name>.write_roots`
+is refused: the key is top level only.
+
+#### `outside_writes:` {#outside-writes}
+
+Also top level: `ask` (the default) puts a write outside every root to you as
+above; `refuse` refuses it with no prompt, as iota did before 0.9.0. It only
+tightens: once a config file of the stack says `refuse`, a later `ask` changes
+nothing. To let a directory in silently, in every mode, list it in
+`write_roots:` instead.
+
+#### Protected paths
+
+A few files are never written unasked — not by the writers, not by a
+sandboxed shell command — whatever `auto_write`, `auto_run` or `write_roots:`
+say:
+
+| Path | Why |
+|---|---|
+| `<project>/.iota.yaml`, `<project>/.iota.yml` | the project config iota loads |
+| `<project>/.git/hooks/` | git runs them on your next git command |
+| `<project>/.git/config`, `<project>/.git/config.worktree` | they can point git at another program (`core.fsmonitor`, `core.hooksPath`) |
+| the same files of each submodule, under `<project>/.git/modules` | as above |
+| `~/.iota.yaml`, `~/.iota.yml` | your own config |
+| `~/.iota/trusted.json` | the record of the project configs you [trust](./config-file.md#trusting-a-project-config) |
+
+`<project>/.git` and `~/.iota` themselves cannot be renamed or replaced either
+(their other contents stay writable). In a worktree made with `git worktree
+add`, the main repository's `.git/hooks` and `.git/config` and the worktree's
+`config.worktree` are covered too, and so is the `.git` of any `write_roots:`
+directory that is a repository. Listing `<project>/.git` in `write_roots:`
+opens the rest of `.git`, not these files.
+
+The writers ask about a protected file **every time**, one file at a time,
+naming it and why — `write_file /Users/you/project/.git/hooks/pre-commit
+(protected): git executes the files in .git/hooks on the user's next git
+command — allow?` — and offer only **Allow once** and **Deny**. In a `-m` run,
+or under `outside_writes: refuse`, the write is refused and the message says
+why. `~/.iota/trusted.json` is never written, whatever you answer:
+`… no tool may write it; the user trusts a project config by running `iota
+config trust` themselves`.
 
 ## `skills`
 
