@@ -7,9 +7,12 @@ sidebar_label: Slash commands
 
 # Slash commands
 
-In interactive mode, the following commands are available. When the line starts
-with `/`, a suggestion row appears below the input and narrows as you keep typing;
-press Tab to cycle through the completions. Commands that do not apply to the
+In interactive mode, the following commands are available. Type `/` and a list
+opens above the input: one command per row, its description beside it, and it
+narrows as you keep typing. `↑`/`↓` move through it, **Enter** runs the
+highlighted command, **Tab** completes it, **Esc** puts back what you typed,
+and a click highlights a row. `/skills ` lists each skill with its own
+description. Commands that do not apply to the
 current session (for example `/edit` on a text provider) are not offered at all,
 and an unknown `/word` is sent as a normal message.
 
@@ -28,6 +31,7 @@ and an unknown `/word` is sent as a normal message.
 | `/jobs` | Two tabs over the background jobs, refreshed every second: "Jobs" is a single-select list — id, elapsed, command; pick one for its full command, clock, pid, output file and the last lines of its output (Esc returns to the list) — and "Kill" a multi-select list that ends the jobs you tick (Space toggles, Enter kills; each one's notice lands as `killed`). Exists only while a job is running: a `shell` call that yielded after 20 s, or one started with `background: true` (see [Background jobs](./builtin-toolsets.md#background-jobs)). |
 | `/tools` | One list of where the model's tools come from, refreshed while it is open: `built in` (the tools iota ships with) first, then each MCP server — its tool count and how it stands: `connected`, `connecting…`, `down`, `needs login` or `failed`, with the reason in a few words. Enter opens that source's page; Esc goes back to the list, on the row you left. A server's page shows its status, endpoint, transport, login, the names its tools go by (`mcp__<server>__<tool>`), its call timeout, the full reason it failed or went down (its stderr included), and its tools; **Enter there reconnects the server** in the background — the page shows it happening and how it went, and the chat gets one line, `MCP <name> reconnected · N tools` or why it did not. The `built in` page lists the tools and has nothing to reconnect. See [Seeing what is connected](./mcp.md#seeing-what-is-connected). |
 | `/debug [on\|off]` | Request inspector. `/debug on` / `/debug off` toggle recording of API round trips (a `debug` marker appears in the status row while on); bare `/debug` opens the two-tab console — "Messages" (newest first, drill into a request/response pair) and the "Verbose" switch. Recording is off by default and MCP traffic is not recorded. |
+| `/exit` | Quit iota, exactly as Ctrl+D does, with no confirmation — the session is already saved as it goes. The conversation is written into the terminal's own history on the way out. A [bot](./bot-mode.md) quits on it too and keeps its session. |
 | `/skills [name [instructions]]` | Bare `/skills` lists discovered agent skills — name, source (project/user), description, and any invalid skills that were skipped. `/skills <name>` runs one: its instructions (plus anything you add after the name) are sent as the message. Agent mode only; every discovered skill also shows up as a completion row. |
 
 Attached files are sent with your next message, then cleared automatically.
@@ -36,15 +40,66 @@ Attached files are sent with your next message, then cleared automatically.
 
 | Key | What it does |
 |-----|--------------|
-| **Tab** | Cycle through the slash-command completions in the suggestion row. |
+| **Tab** | Complete the highlighted slash command in the completion list. |
 | **Esc** | Cancel the innermost running scope — a streaming reply, or a running `shell` call. Background-job notices queued behind a turn you stop wait for your next message instead of starting turns of their own (see [Rate limits and Esc](#rate-limits-and-esc)). |
 | **Ctrl+C** | Cancel the turn. |
 | **Enter** | Send. You can keep typing while a reply streams; queued submits are sent in order. **Ctrl+Enter** sends too. |
 | **Ctrl+J** | Insert a line break. Works in every terminal. |
 | **Alt+Enter**, **Shift+Enter** | Insert a line break where the terminal reports the modifier (below); elsewhere they are a plain Enter and send. |
+| **Ctrl+D**, `/exit` | Quit. Ctrl+C at an empty prompt quits too. |
+| **PgUp** / **PgDn** | Scroll the conversation half a screen (Fn+↑/↓ on a MacBook). |
+| **Ctrl+Home** / **Ctrl+End** | Go to the first line of the conversation / back to the latest output. |
+| **Ctrl+R** | Search the conversation (below). |
+| **Ctrl+O** | Write the conversation into the terminal's own history (below). |
+| **Ctrl+Z** | Suspend iota and give the terminal back to the shell; `fg` brings it back, redrawn at the window's size. |
 
 A reply interrupted with **Esc** or **Ctrl+C** keeps its partial text in the
 history, marked interrupted.
+
+### Scrolling and search
+
+iota runs full screen: the conversation fills the window and the input stays at
+the bottom. Scroll with **PgUp**/**PgDn** or the mouse wheel. Scrolled back, new
+output does not pull you down — the bottom line counts the new lines below
+(`↓ N new lines`) — and **Ctrl+End** (or scrolling to the bottom) follows the
+output again.
+
+**Ctrl+R** searches the conversation; so does `/` while you are scrolled back
+and the input is empty. Matches are highlighted and counted, `n`/`p` step
+through them, **Enter** stays where you are and **Esc** goes back. **Ctrl+F**
+is not search: it moves the cursor one character right.
+
+While iota runs, your terminal's own scrollbar, Cmd+F and tmux copy mode reach
+only what is on the screen now. **Ctrl+O** writes the conversation into the
+terminal's history, so they reach all of it; press any key to come back. Each
+line is written once, however often you press it. When you quit, the rest is
+written there too (not after a crash or `kill -9`: `iota resume` brings the
+session back). A resumed session shows its last three rounds; `/export` has the
+whole conversation.
+
+Lists and pickers take at most half the window and never more than 15 rows; a
+longer list scrolls inside them: `↑`/`↓` a row, `←`/`→` a page, `g`/`G` the top
+and the bottom.
+
+### The mouse
+
+- **The wheel** scrolls the conversation, like PgUp/PgDn.
+- **A click** puts the input's cursor where you clicked. In a dialog a click
+  moves to a row and a second click on it chooses it, so one stray click never
+  answers an approval.
+- **Drag** over the conversation to select; **double-click** a word,
+  **triple-click** a line. Letting go copies the text. Hold the drag at the top
+  or bottom edge and the conversation keeps scrolling, so a selection can span
+  several screens.
+
+The copy goes to your clipboard (`pbcopy`, `wl-copy`, `xclip`), to tmux's paste
+buffer inside tmux, and over SSH to your local terminal (OSC 52). It is plain
+text, and a line the screen wrapped is copied as one line. The status row says
+`copied N characters · Shift+drag selects in the terminal` — Shift-drag
+(Option-drag in iTerm2) gives you the terminal's own selection instead.
+
+To leave the mouse to the terminal altogether, set
+[`mouse: false`](./config-reference.md#mouse) in `~/.iota.yaml`.
 
 ### Line breaks in the composer
 

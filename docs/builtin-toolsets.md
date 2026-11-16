@@ -312,7 +312,7 @@ foreground call does not yield but is waited for to the end, its result saying
 so — a `timeout` the call named still applies, and the approval rules are
 unchanged. The log file is left on disk,
 uncapped, so `tail` still shows everything. **Background jobs are killed when
-iota exits** — `/quit`, Ctrl+C at the prompt, or the end of a `-m` run — so a
+iota exits** — `/exit`, Ctrl+D, Ctrl+C at the prompt, or the end of a `-m` run — so a
 resumed session never inherits one; a job that must survive that has to detach
 itself (`nohup`, `setsid`).
 
