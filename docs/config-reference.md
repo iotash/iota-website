@@ -20,7 +20,7 @@ A run reads, in this order, each file merged over the previous:
 | Tier | File | Notes |
 |---|---|---|
 | user | `~/.iota.yaml`, else `~/.iota.yml` | the first of the two that exists; skipped when there is no home directory |
-| project | `./.iota.yaml`, else `./.iota.yml` | in the **working directory**, not the project root; skipped when there is no cwd |
+| project | `./.iota.yaml`, else `./.iota.yml` | in the **working directory**, not the project root; skipped when there is no cwd, and read only once you [trust it](#trusting-a-project-config) |
 | explicit | `-c/--config <path>` | **alone** — with `-c` neither tier is read, whether or not the file exists |
 
 Merging is by **whole entry**: a `models.gpt` in the project file replaces the
@@ -43,6 +43,45 @@ What happens to a file that is not right:
 
 The whole document is audited **before** it is decoded, so a mistake is an
 error with a fix rather than a line that silently does nothing.
+
+### Trusting a project config
+
+A project's `.iota.yaml` comes with the repository, and it can start MCP
+servers, point a provider (and your key) somewhere else and loosen the
+sandbox. So iota reads it only after you have trusted **these exact bytes**:
+`~/.iota/trusted.json` records the file's real path with the SHA-256 of its
+content, and an edit to the file makes it untrusted again. The user file and a
+file named with `-c` are never gated.
+
+Started on a terminal, iota stops before anything else runs, shows what the
+file would do — every MCP command or url, a provider `url`, a `${…}` key or
+header and where it is sent, `system_file`, a loosened `sandbox`, `auto_run`,
+`network` or `auto_write`, `write_roots:` and `outside_writes:` — and asks:
+
+```text
+/Users/you/project/.iota.yaml is a project config you have not trusted.
+It sets:
+  mcp_servers.db: runs npx -y @acme/db-mcp
+  agents.default.tools.shell.network: true
+Trust it? [t]rust / [N]ot now
+```
+
+`t` records it and the run goes on with it; Enter (or anything else) skips it
+for this run: `Not using <path> for this run (`iota config trust` trusts it)`.
+A run that cannot ask — `-m`, a pipe, a script, `iota list`, `iota config
+check` — never waits: it skips the file with one warning and runs on
+`~/.iota.yaml`:
+
+```text
+Warning: skipping project config /Users/you/project/.iota.yaml (it is not trusted): run `iota config trust` to trust it, or pass it with -c
+```
+
+`(it has changed since it was trusted)` takes the place of `(it is not
+trusted)` after an edit. For CI and scripted setups, run `iota config trust`
+once in the directory, or name the file with `-c`. `iota config path` marks a
+file a run would skip, `(not trusted: skipped)` or `(changed since trusted:
+skipped)`. No tool iota runs can trust a file for you: the file tools never
+write `~/.iota/trusted.json`, and a sandboxed `iota config trust` is refused.
 
 ### The first run writes a starter
 
@@ -114,14 +153,17 @@ agents:
 | `iota config check` (the default action) | loads exactly what a run would — every warning on stderr, the first hard error as the run's own — then prints the files read and `OK: N provider(s), N model(s), N agent(s), N mcp server(s)`, with a one-line warning when no `agents.default` exists |
 | `iota config path` | prints the files this invocation reads, in merge order, each marked `(missing)` when it is not there — the answer to "why is my change not taking effect" |
 | `iota config init` | writes the starter above to `~/.iota.yaml` (or to the `-c` path), refusing a file that exists: `<path> already exists (use -c <path> to write somewhere else)` |
+| `iota config trust [--path <file>]` | [trusts](#trusting-a-project-config) the working directory's `.iota.yaml` (or the file `--path` names) as it is now, prints `Trusted <path>` and what the file sets |
+| `iota config untrust [--path <file>]` | forgets it, so the next run asks again: `No longer trusted: <path>`, or `<path> was not trusted` |
 
 `-c` is global, so `iota -c f.yaml config check` and `iota config check -c
 f.yaml` are the same invocation.
 
 ## Top level
 
-Exactly four keys are accepted; each is a map from a name you choose to an
-entry. A name is any YAML string, and it is what the other layers refer to.
+Seven keys are accepted. Four are maps from a name you choose to an entry — a
+name is any YAML string, and it is what the other layers refer to — and three
+are settings for every agent.
 
 | Key | Holds | Reference |
 |---|---|---|
@@ -129,15 +171,52 @@ entry. A name is any YAML string, and it is what the other layers refer to.
 | `models:` | configured models — which provider serves a model id, and the properties of the model itself | [`models.<name>`](#modelsname) |
 | `agents:` | usages — what a run names: a model and its choices, a prompt, tools, MCP servers, session switches | [`agents.<name>`](#agentsname) |
 | `mcp_servers:` | the MCP servers an agent may select | [`mcp_servers.<name>`](#mcp_serversname) |
+| `write_roots:` | a list of directories outside the project that the code tools and a sandboxed shell may write | [below](#write_roots) |
+| `outside_writes:` | `ask` or `refuse`: what a code-tool write outside every root does | [below](#outside_writes) |
+| `mouse:` | whether the chat uses the mouse | [below](#mouse) |
 
 Any other top-level key fails the load:
 
 ```text
-config ~/.iota.yaml: agnets: unknown top-level key (want providers:, models:, agents:, mcp_servers:)
+config ~/.iota.yaml: agnets: unknown top-level key (want providers:, models:, agents:, mcp_servers:, write_roots:, outside_writes:, mouse:)
 ```
 
 An empty document, and an empty section (`providers:` with nothing under it),
 are both fine.
+
+### `write_roots:`
+
+A list of paths, default empty. Each is a directory `edit_file`/`write_file`
+may write without the outside-the-project prompt and a sandboxed `shell`
+command may write — one list for both. `~` is your home; a relative path is
+taken from the project root. Every file of the stack adds its entries, and two
+that name the same directory count once. A blank entry fails the load
+(`write_roots[0]: …`); a directory that does not exist yet is accepted. Under
+`agents:` the key is refused. The [protected
+paths](./builtin-toolsets.md#protected-paths) stay closed inside these
+directories too. This replaces `tools.shell.write`, which is gone: a config
+that still has it loses the shell tool, with a warning.
+
+### `outside_writes:`
+
+`ask` (default) or `refuse`. With `ask`, an `edit_file`/`write_file` outside
+the project and the `write_roots:` is put to you in a chat — even with
+`auto_write: true` — and refused in a `-m` run. With `refuse` it is refused
+with no prompt everywhere, and so is a write to a protected path. It only
+tightens: once a file of the stack says `refuse`, a later `ask` changes
+nothing. See [Where the writers may
+write](./builtin-toolsets.md#where-the-writers-may-write).
+
+### `mouse:`
+
+A boolean, default `true`: the chat takes the mouse — the wheel scrolls the
+conversation, a click places the cursor or picks a row, a drag selects and
+copies (see [Keys](./slash-commands.md#the-mouse)). `mouse: false` asks the
+terminal for no mouse reports at all, so the wheel and selection are the
+terminal's own; to select across screens, press Ctrl+O first. It is a
+setting of your terminal, not of an agent, so it usually lives in
+`~/.iota.yaml`; the last file of the stack that sets it wins. The session
+picker of `iota resume` follows it too.
 
 ## `providers.<name>`
 
@@ -312,8 +391,8 @@ hand in `/model` fits in is on [the config file](./config-file.md#the-five-layer
 
 ### Booleans
 
-Every boolean key (`no_save`, `notify`, `image`, `json_edits`,
-and the toolsets' `network`, `auto_run`, `auto_write`, `read_only`) takes the
+Every boolean key (`no_save`, `notify`, `image`, `json_edits`, `mouse`,
+`mcp_servers.<name>.auto_run`, and the toolsets' `network`, `auto_run`, `auto_write`, `read_only`) takes the
 YAML 1.1 spellings in any case, quoted or plain: `true`/`yes`/`on` and
 `false`/`no`/`off`. A null value (`no_save:` with nothing after it) reads as
 `false` — or, for `notify`, as absent. Anything else fails the decode with
@@ -339,6 +418,7 @@ by hand. A server is either **stdio** (`command`, with `args` and `env`) or
 | `client_id` | string | `""` = dynamic registration, else the Client ID Metadata Document | an OAuth client registered with the authorization server out of band |
 | `client_secret` | string | `""` = a public client | the secret paired with `client_id`, written as a `${env:VAR}` reference and expanded like every other value. Needs a `client_id`: `mcp_servers.<name>: client_secret needs a client_id` |
 | `redirect_port` | integer | absent = `17801` | with a `client_id`: the loopback port the registered redirect URI (`http://127.0.0.1:<port>/callback`) was registered with — a pre-registered client's URI must match exactly, so the port is fixed, where a client registered on the spot gets a random one. Needs a `client_id`: `mcp_servers.<name>: redirect_port needs a client_id (only a pre-registered client has a fixed redirect URI)` |
+| `auto_run` | boolean | `false` | let this server's tools run without asking. By default every MCP tool call is put to you, and a `-m` run refuses it naming this key. Only for a server you trust to act unasked — a server process is not sandboxed. See [MCP servers](./mcp.md#approval) |
 | `tool_timeout_sec` | integer (seconds) | absent = 30 minutes | how long one tool call to this server may go unanswered before it is given up; the model is then told `MCP server "<name>": no answer within <d>, so the call was given up — if the tool is meant to run that long, raise tool_timeout_sec for this server in the config`. A backstop for a server that stopped answering, not a speed limit — raise it for tools that legitimately run longer. 1 or more: `0` fails the load for a server the agent uses, before anything connects (`config mcp_servers.<name>.tool_timeout_sec 0: want 1 or more`) — it is neither "time out at once" nor "no deadline". Every call has a deadline, because a headless run or a bot has no ESC to end a call nobody answers; for a tool that runs for hours, write a large number (`86400` is a day). A call that times out does not mark the server down. `/tools` shows the deadline in effect on the server's page (see [When a server fails](./mcp.md#when-a-server-fails)) |
 
 The three client keys describe a login, so any of them on a stdio server
@@ -347,7 +427,7 @@ login, and a stdio server has nothing to log in to`) or beside `auth: none`
 (`… describe an OAuth login, which `auth: none` rules out`) fails the load.
 An unknown key here is `mcp_servers.fs.commadn: unknown key (want command,
 args, url, env, headers, defer, auth, client_id, client_secret,
-redirect_port, tool_timeout_sec)`.
+redirect_port, tool_timeout_sec, auto_run)`.
 
 **Project scope holds references, not secrets.** `./.iota.yaml` is shared with
 everyone who clones the project, so `iota mcp add --scope project` refuses a
