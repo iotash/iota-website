@@ -278,7 +278,7 @@ endpoint (`models.x: "sonnet" names no provider (want "provider:model")`), and
 Everything after the **first** colon is the id, so a relay's `vendor/model`
 shape survives (`openrouter:anthropic/claude-3.5-sonnet`).
 
-The mapping form takes these thirteen keys; `context_window`, `effort`,
+The mapping form takes these fourteen keys; `context_window`, `effort`,
 `temperature`, `top_p` and `max_tokens` are defaults an agent may
 [override](#the-five-layered-parameters).
 
@@ -297,6 +297,7 @@ The mapping form takes these thirteen keys; `context_window`, `effort`,
 | `image_size` | string | `""` = omitted | an image-provider generation default, verbatim (`"2K"`, `"1536x1024"` for `images`) |
 | `negative_prompt` | string | `""` = omitted | an image-provider generation default, verbatim |
 | `json_edits` | boolean | `false` | send image edits as a JSON body instead of multipart — `images` type only; on any other type a warning, and the key is ignored |
+| `moderation` | `auto` \| `low` | `""` = not sent (the API's `auto`) | the moderation level generations ask for — `images` type only (OpenAI, Venice); edits do not carry it. Anything else fails the load: `models.<name>.moderation: unknown moderation (want auto, low)`; on another type a warning, and the key is ignored. See [Image generation](./image-generation.md) |
 
 The three verbatim image knobs are warned about and dropped on a type that is
 not an image provider: `Warning: aspect_ratio/image_size/negative_prompt

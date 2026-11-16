@@ -84,6 +84,30 @@ body — the same request serves both, so nothing is generated twice and a
 non-streaming backend simply shows the elapsed clock. `imagen` has no
 streaming form at all, so those turns show only the elapsed clock.
 
+**Moderation.** OpenAI's Images API, and Venice which uses the same field,
+moderate generations at `auto` by default (Venice blurs adult content). Set
+`moderation: low` on a `type: images` model to ask for less restrictive
+moderation, or turn on the **Moderation** switch in `/model` mid-session
+(persisted with the session; off is `auto`):
+
+```yaml
+providers:
+  openai-images:
+    type: images
+
+models:
+  gpt-image:
+    provider: openai-images
+    id: gpt-image-1
+    moderation: low          # auto | low; absent = not sent, the API's auto
+```
+
+Generations carry it; edits do not. Any other value fails the load
+(`models.gpt-image.moderation: unknown moderation (want auto, low)`), and on a
+provider type other than `images` it is a warning —
+``Warning: `moderation` applies only to the images provider type (ignored for
+imagen)`` — and is not sent.
+
 The edit endpoint comes in two wire flavors: OpenAI's native
 `/images/edits` is multipart, while some backends (xAI) accept only a JSON
 body and reject multipart outright. Set `json_edits: true` for those, or
@@ -104,12 +128,18 @@ both land in the session the same, the link being fetched right away.
 :::warning
 
 Generation is billed per call, so failures are never auto-retried — an error
-surfaces immediately and you decide whether to spend again.
+surfaces immediately and you decide whether to spend again. The one exception
+cannot cost anything: an endpoint that refuses the progressive-frame fields
+with a `400` (Venice does) is asked once more without them, and a `400` is
+refused before anything is generated.
 
 :::
 
 These models have no tokens, no temperature, and no reasoning, so the
 corresponding machinery disappears for such sessions: `/model` shows no
 Context/Effort/Temperature tabs, the status bar drops its context meter, and
-`/compact` does not apply. `/model` still picks models — filtered to
-image-capable ones when the server provides capability metadata.
+`/compact` does not apply. `/model` still picks models — filtered to the
+image models when the endpoint labels its models (`type` or
+`output_modalities`, as Venice and OpenRouter do); an endpoint that labels
+nothing, such as OpenAI's or xAI's, lists every model. When the labels mark no
+image model the picker says so, and you can still type a model id.
