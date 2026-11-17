@@ -69,6 +69,12 @@ So `hc get` and `hc wait` see where the chat is, and `hc send` refuses to type
 into an open approval. A headless `-m` run reports too, writing to the terminal
 even when its output goes to a file.
 
+A message a sub-agent hands over as `<hc from="worker-2">…</hc>` shows only
+its inner text in your block, with `hc from:worker-2` on a gray tab just above
+it. Only herdr-core's own `hc` element is treated this way, and only inside
+herdr-core: XML you paste yourself, `<hc>` anywhere else included, is shown and
+sent exactly as you typed it.
+
 iota recognises hc by asking the terminal, not by reading the environment:
 with `HC_TERMINAL_ID` set it sends one query at start-up and writes OSC 7501
 only when the terminal answers it. Inside a tmux in an hc terminal the answer
