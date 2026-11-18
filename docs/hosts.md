@@ -70,8 +70,9 @@ into an open approval. A headless `-m` run reports too, writing to the terminal
 even when its output goes to a file.
 
 A message a sub-agent hands over as `<hc from="worker-2">…</hc>` shows only
-its inner text in your block, with `hc from:worker-2` on a gray tab just above
-it. Only herdr-core's own `hc` element is treated this way, and only inside
+its inner text in your block, with `hc from:worker-2` on a teal tab just above
+it, and the block's bar is teal, where a block you typed keeps a gray one
+(with `NO_COLOR` only the tab tells them apart). Only herdr-core's own `hc` element is treated this way, and only inside
 herdr-core: XML you paste yourself, `<hc>` anywhere else included, is shown and
 sent exactly as you typed it.
 
