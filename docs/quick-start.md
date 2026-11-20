@@ -1,7 +1,7 @@
 ---
 id: quick-start
 title: Your first run
-description: The commands iota takes, the nine flags, and the environment variables iota reads.
+description: The commands iota takes, the ten flags, and the environment variables iota reads.
 sidebar_label: Your first run
 ---
 
@@ -71,7 +71,7 @@ collide with an agent you named.
 
 ## Flags
 
-Nine flags, and every one of them describes THIS invocation. Anything that
+Ten flags, and every one of them describes THIS invocation. Anything that
 describes configuration — the key, the endpoint, the temperature, the context
 window, the prompt you want every time — lives in [the three config
 layers](./config-file.md) instead.
@@ -86,6 +86,7 @@ which is a run that starts from a saved session), so they go after the command.
 | `--system` | `-s` | System prompt for this run (beats the agent's `system:` / `system_file:`; what iota puts around it is on [The system prompt](./system-prompt.md)) |
 | `--config` | `-c` | Path to config file (default: `~/.iota.yaml`, then `./.iota.yaml`). Global: valid before or after the command, so `iota -c f.yaml list` and `iota list -c f.yaml` are the same |
 | `--mcp` | | MCP server (command string or URL, repeatable) |
+| `--add-dir` | | Make a directory writable for this run, like a [`write_roots:`](./builtin-toolsets.md#write-roots) entry: the code writers and the sandboxed `shell` may write it, `-m` included (repeatable; relative to the working directory, not the project root; not kept with the session) |
 | `--no-save` | | Start ephemeral — nothing touches disk unless `/save` is run (interactive only) |
 | `--max-turns` | | Limit agentic tool turns for the whole run (`-m` only; 0 = unlimited) |
 | `--output-format` | | `-m` output: `text` (default, the reply alone) or `json` (one result object with per-round token usage) |
