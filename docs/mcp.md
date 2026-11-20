@@ -1,7 +1,7 @@
 ---
 id: mcp
 title: MCP servers
-description: stdio and HTTP MCP servers, iota mcp add/list/remove, OAuth 2.1 login, namespaced tools, and deferred loading.
+description: stdio and HTTP MCP servers, iota mcp add/list/remove, approval and per-tool grants, OAuth 2.1 login, namespaced tools, and deferred loading.
 sidebar_label: MCP servers
 ---
 
@@ -62,15 +62,39 @@ agents:
 ## Approval
 
 **Every MCP tool call asks first**, like a file edit or a shell command:
-`github:create_issue <a summary of its arguments> — allow?`, with allow once / allow for
-this session / deny. A server process is not sandboxed — it can read, write,
-fetch and post with your permissions — and iota does not guess which tools are
-safe from their names or descriptions. "Allow for this session" covers that
-one tool until `/new` or a `/session` resume; the server's other tools still
-ask.
+`github:create_issue <a summary of its arguments> — allow?`. A server process
+is not sandboxed — it can read, write, fetch and post with your permissions —
+and iota does not guess which tools are safe from their names or
+descriptions. The items are:
 
-For a server you trust to act unasked, set `auto_run: true` on its entry
-(default `false`):
+| Item | What it does |
+|---|---|
+| `Allow once` | runs this call |
+| `Always allow github:create_issue in this session` | runs it, and that one tool stops asking for this session |
+| `Always allow github:create_issue in this project` | runs it, and that one tool stops asking in every session and every `-m` run of this project |
+| `Deny` | the call does not run; the model is told so |
+
+The two "always" items are [grants](./builtin-toolsets.md#grants): a session
+grant comes back with `iota resume` and `/session` and is gone after `/new`,
+a project grant lasts until you revoke it. The server's other tools still ask.
+To allow **every tool of a server** — those it starts offering later
+included — type it with [`/allow`](./slash-commands.md#allow); the dialog
+never offers it:
+
+```text
+/allow github:search_issues            one tool, this session
+/allow github:*                        every tool of the server, this session
+/allow project github:*                every tool of the server, this project
+```
+
+The server must be connected and the tool one it lists now, so a typo is
+refused rather than stored. A grant is keyed by the server's name in
+`mcp_servers:` and the tool's own name, not by the `mcp__…` name the model
+sees. Grants are listed and taken back in bare `/allow`'s **Grants** tab.
+
+For a server you trust to act unasked everywhere, set `auto_run: true` on its
+entry (default `false`) — the config-level form, which still means "never
+ask", in a chat and in `-m`, in every project:
 
 ```yaml
 mcp_servers:
@@ -80,21 +104,33 @@ mcp_servers:
     auto_run: true           # its tools run without asking, in a chat and in -m
 ```
 
-A run with nobody to ask (`-m`) refuses a call to a server without `auto_run`,
-and the model is told which key to set:
+A grant cannot be made for a server that is `auto_run` (`/allow: github's
+tools already run without asking (auto_run)`): there is nothing left to ask.
+
+A run with nobody to ask (`-m`) runs a tool that `auto_run` or a project grant
+covers, and refuses any other call, telling the model what would allow it:
 
 ```text
-mcp__github__create_issue was not executed: the tools of MCP server "github" need the user's approval, which this non-interactive run cannot ask for; set `mcp_servers.github.auto_run: true` to allow it.
+mcp__github__create_issue was not executed: the tools of MCP server "github" need the user's approval, which this non-interactive run cannot ask for; set `mcp_servers.github.auto_run: true`, or allow it for the project from a chat (/allow project github:create_issue).
 ```
 
-A `--mcp` server always asks, so `-m … --mcp …` cannot run its tools: write it
-as an `mcp_servers` entry with `auto_run: true` instead.
+A `--mcp` server has no entry to put `auto_run` in. Its grants are keyed by
+its whole command line (or URL), exactly as passed to `--mcp`, so the same
+flag value in a later run is the same server and a different one is not; a
+project grant made for it in a chat therefore lets `-m … --mcp …` run that
+tool too. Its refusal reads `…; write it as an `mcp_servers` entry with
+`auto_run: true`, or allow it for the project from a chat (/allow project
+<name>:<tool>).`, where `<name>` is how `/tools` names the server — its URL or
+its command's first word. In the **Grants** tab its rows carry the whole flag
+value: `this project  npx:push (--mcp npx -y @acme/mcp)`. Two `--mcp` servers
+that share that name cannot be told apart by `/allow`; give one an
+`mcp_servers:` entry of its own.
 
 :::warning
 
 **Upgrading from before v0.9.0**, when MCP tools ran unasked: a script or CI
 job that calls MCP tools in `-m` needs `auto_run: true` on each server it
-relies on.
+relies on, or a project grant for the tools it calls.
 
 :::
 
