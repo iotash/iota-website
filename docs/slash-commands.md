@@ -80,8 +80,10 @@ bare word, a built-in tool. `project` is a keyword, not a path.
 
 The model cannot run `/allow`, and neither can a message [from another
 program](./quick-start.md#messaging-a-running-chat): it is the user's, typed
-at the prompt. A chat that starts or resumes with grants in force says so once:
-`grants: 2 for this session, 3 for this project (/allow lists them)`.
+at the prompt. Grants in force are loaded without a word — at a start, a
+resume, a `/session` switch and in a `-m` run alike; `/status` counts them in
+its `Grants` row, present only while something is granted, and the bare
+`/allow` panel lists them.
 
 Each outcome is one line:
 
