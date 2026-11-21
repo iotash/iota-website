@@ -114,16 +114,26 @@ Refusals start with `/allow: ` and store nothing:
 
 ### The grants panel
 
-Bare `/allow` opens a tabbed panel; the tab in focus when you press **Enter**
-is what happens, and **Esc** changes nothing.
+Bare `/allow` grants nothing: it lists the grants and takes them back. With
+nothing to list — no grant, and no `write_roots:` or `--add-dir` directory — it
+opens nothing and prints one line:
+
+```text
+No grants. /allow <dir> makes a directory writable for this session; /allow project <dir> for this project.
+```
+
+(in a run with no project: `No grants. /allow <dir> makes a directory writable for this session.`). Otherwise it opens a tabbed
+panel: **Enter** on **Grants** revokes the checked rows, **Enter** on
+**Static** closes it, and **Esc** changes nothing.
 
 | Tab | What it is |
 |-----|------------|
-| **Add** | A directory browser opened on the project root: `./` (the directory shown), `../` and the directories in it. **Enter** opens the highlighted directory, **Space** chooses it. The choice is granted for this session, exactly as `/allow <dir>` grants it. |
 | **Grants** | Every grant in force, this session's first, then this project's — each row its level (`this session`, `this project`) and the directory or the tool, a `--mcp` server's tool marked `(--mcp <command>)`, a directory that no longer leads anywhere `(stale)`. **Space** checks rows, **Enter** revokes the checked ones — each from every level that holds it — with one line per grant: `✓ revoked /Users/you/scratch (this session, this project)`. |
-| **Static** | Read-only, and present only when there is one: the directories writable by configuration, `write_roots:  /path` and `--add-dir     /path`. They are not grants and cannot be revoked here — edit [`write_roots:`](./builtin-toolsets.md#write-roots) or drop the flag. |
+| **Static** | Read-only, and present only when `write_roots:` or `--add-dir` gives a directory: the directories writable by configuration, `write_roots:  /path` and `--add-dir     /path`. They are not grants and cannot be revoked here — edit [`write_roots:`](./builtin-toolsets.md#write-roots) or drop the flag. |
 
-There is no `/revoke`: taking a grant back is the panel's **Grants** tab.
+There is no directory browser: granting is the typed form, `/allow <dir>`, or
+the approval dialog's item. There is no `/revoke`: taking a grant back is the
+panel's **Grants** tab.
 
 ## Keys
 
