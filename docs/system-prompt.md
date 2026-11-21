@@ -86,10 +86,13 @@ config: /Users/someone/Work/project/ci.yaml (given with -c; the only scope)
 
 #### The host's lines
 
-Inside a terminal host iota recognises — a [herdr](./hosts.md#herdr) pane, a
-[cmux](./hosts.md#cmux) surface — the block closes with what that host tells
+Inside a terminal host iota recognises — a [herdr-core](./hosts.md#herdr-core-hc)
+terminal, a [herdr](./hosts.md#herdr) pane, a [cmux](./hosts.md#cmux) surface —
+the block closes with what that host tells
 the model: its name, then the ids its own CLI takes. A plain terminal adds
-nothing. In a herdr pane the tail reads:
+nothing, and so does a terminal that takes
+[program status](./hosts.md#program-status-osc-7501): the model is not told
+about it. In a herdr pane the tail reads:
 
 ```text
 project config: /Users/someone/Work/project/.iota.yaml
@@ -103,7 +106,8 @@ herdr note: HERDR_ENV is unset in your shell on purpose; the herdr CLI works
 
 | Line | Value | Where it comes from |
 |---|---|---|
-| `host:` | the host's name: `herdr` or `cmux` — one host, the innermost (a herdr pane inside a cmux window says `herdr` and nothing about cmux, see [nesting](./hosts.md#nesting)) | the detected host |
+| `host:` | the host's name: `herdr-core`, `herdr` or `cmux` — one host, the innermost (a herdr pane inside a cmux window says `herdr` and nothing about cmux, see [nesting](./hosts.md#nesting)) | the detected host |
+| `hc terminal:` | the terminal the chat runs in, as `hc get`, `hc read` and `hc label` take it (`HC_TERMINAL_ID`); the commands the model runs keep the variable, so there is no note line in an hc terminal | `host::hc` |
 | `herdr pane:` | the pane the chat runs in, as `herdr pane …` commands take it (`HERDR_PANE_ID`) | `host::herdr` |
 | `herdr workspace:`, `herdr tab:` | the pane's workspace and tab (`HERDR_WORKSPACE_ID`, `HERDR_TAB_ID`); each line only when herdr injected the id | `host::herdr` |
 | `herdr note:` | always, in a herdr pane: the shell tool runs without `HERDR_ENV` on purpose (see [what the chat's children inherit](./hosts.md#what-the-chats-children-inherit)), so a check like `test "$HERDR_ENV" = 1` failing there is expected and the `herdr` CLI still works | `host::herdr` |
@@ -114,6 +118,13 @@ host contributes them through the same capability interface that carries its
 status reporting (`EnvironmentContributor` in `src/host/mod.rs`), so a new host
 reaches the model by implementing it and nowhere else. They are the reason the
 harness text is composed after the host is detected rather than at assembly.
+
+What a host does to the chat's children is a separate matter, and not in the
+block: a herdr pane's commands start without `HERDR_ENV` (the `herdr note:`
+above says so), and every run — in any host or none — gives its commands and
+MCP stdio servers `IOTA_STATUS_SESSION`, its session id (on Unix), so a nested `iota` on
+the same terminal does not [report its state](./hosts.md#program-status-osc-7501)
+over the chat's. The model is not told about that variable.
 
 ### `<iota_cli>`
 

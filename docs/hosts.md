@@ -93,7 +93,7 @@ terminal started from a herdr pane or a cmux surface inherits that pane's
 environment, and the state goes to the inherited pane, not to the terminal.
 
 **One reporter per terminal.** Every command the chat runs and every MCP
-stdio server is given `IOTA_STATUS_SESSION`, the run's session id. An `iota`
+stdio server is given `IOTA_STATUS_SESSION`, the run's session id (on Unix). An `iota`
 started that way — an `iota -m` from the shell tool or from an MCP server —
 finds its own session id equal to the one it inherited: it is on its parent's
 terminal, so it does not ask and writes nothing, and the chat's record stays.
