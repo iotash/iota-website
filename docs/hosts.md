@@ -1,7 +1,7 @@
 ---
 id: hosts
 title: Terminal hosts
-description: What iota tells the terminal it runs in — the plain terminal's progress and notification sequences, the in-band program status (OSC 7501) a terminal that asks for it gets, herdr-core's identity, herdr's pane lifecycle, cmux's status row — and what the host tells the model back.
+description: What iota tells the terminal it runs in — the plain terminal's progress and notification sequences, the in-band program status (OSC 7501) a terminal that asks for it gets, herdr-core's and rex's identity, herdr's pane lifecycle, cmux's status row — and what the host tells the model back.
 sidebar_label: Terminal hosts
 ---
 
@@ -107,7 +107,7 @@ Which terminals answer:
 | Terminal | Answer | |
 |---|---|---|
 | herdr-core (`hc` 0.1.21) | `ESC]7501;?:states=idle,working,done,blocked,error:kinds=permission,question,auth ESC\`, in 0.2 ms — reports | measured |
-| rex | the same bytes as hc — reports | measured, 2026-11-21 |
+| [rex](#rex) | the same bytes as hc — reports | measured, 2026-11-21 |
 | tmux 3.8, alone or inside an hc terminal | the cursor position alone — the progress bar | measured |
 | Terminal.app, iTerm2, Ghostty outside hc, kitty, WezTerm, Alacritty, VS Code, Windows Terminal, the Linux console | expected: drop the query and answer the cursor position alone — the progress bar | expected, not measured |
 
@@ -147,6 +147,38 @@ bar. When the terminal cannot be asked at all, `HC_TERMINAL_ID` with a
 `TERM_PROGRAM` other than `herdr` still names the host — the model reads
 `host: herdr-core` and its terminal id — but nothing is reported. An hc
 terminal started from a herdr pane reports to hc, not to that pane.
+
+## rex
+
+[rex](https://www.superlogical.com/rex/docs) is a client/server terminal
+workspace by Superlogical: a server owns the sessions and their blocks, and
+the apps and the `rex` command line attach to it. iota recognises a rex block
+from the environment alone — `TERM_PROGRAM=rex` and a non-empty `REX_BLOCK`,
+both of which rex sets in every block. Neither is enough by itself: a tmux, a
+herdr or an hc terminal started inside a rex block sets its own
+`TERM_PROGRAM`, so the `REX_BLOCK` it inherited names an ancestor and is not
+taken. The banner says `in rex`.
+
+What the rex host adds is rex's identity, told to the model: `host: rex`,
+`rex block: <id>` and `rex session: <id>`, the values rex set, so the model
+can drive rex beside itself — `rex split`, `rex capture` — from the `shell`
+tool. The model's shell keeps `REX_BLOCK`, so `rex` there targets iota's
+block.
+
+The chat's state needs nothing rex-specific. rex authored the
+[Program Status Protocol](#program-status-osc-7501) and answers iota's
+start-up question with the same bytes as herdr-core (measured, rex
+0.1.0-preview.21), so it gets `working`, `blocked`, `idle` and `error` as any
+terminal that answers does, and rex's own `program_status` reads back
+`app: iota`.
+
+What rex does not give iota: no message envelope — `rex send` types raw into
+the block, with no sender — and no method for an agent's session, so nothing
+is reported to rex beyond the in-band state. The attention ping stays the
+plain terminal's OSC 9. A rex server started from an hc terminal hands its
+blocks that terminal's `HC_TERMINAL_ID`; `TERM_PROGRAM=rex` is the innermost
+terminal's own word, so the host is rex. An hc terminal started from a rex
+block says `TERM_PROGRAM=ghostty` and is hc.
 
 ## herdr
 
@@ -229,7 +261,7 @@ another window's after that, and shared by every pane, so a status row set
 through it would land on one row for all of them.
 
 iota therefore talks to the innermost host only. Detection runs from the
-inside out — herdr-core, then herdr, then cmux — and the first match is kept, with the plain
+inside out — rex, then herdr-core, then herdr, then cmux — and the first match is kept, with the plain
 terminal behind it (and [program status](#program-status-osc-7501) in front of
 the plain terminal, when the terminal answered and the host has no channel of
 its own): a herdr pane inside a cmux window reports to herdr, never
@@ -241,7 +273,8 @@ designed around.
 ## What the model is told
 
 A detected host adds its lines to the end of the system prompt's
-`<environment>` block: `host: herdr-core`, `hc terminal: t4`; `host: herdr`,
+`<environment>` block: `host: rex`, `rex block: <id>`, `rex session: <id>`;
+`host: herdr-core`, `hc terminal: t4`; `host: herdr`,
 `herdr pane: w1:p2`, the workspace and tab when the pane has them;
 `host: cmux`, `cmux surface: <id>`. The model can
 then drive that host's own CLI from the `shell` tool — split a pane next to
