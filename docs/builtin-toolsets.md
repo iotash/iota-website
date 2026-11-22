@@ -17,8 +17,6 @@ editing project files), `skills` (skill activation; auto-enabled by
 in interactive sessions — disable with `ask: false`).
 
 ```yaml
-write_roots: [~/.cache]      # top level: extra writable directories, every agent
-
 agents:
   claude:
     model: "anthropic:claude-sonnet-4-20250514"
@@ -32,8 +30,11 @@ agents:
       shell:
         network: true        # allow network inside the sandbox
       code:
-        auto_write: true     # no confirmation before edit_file/write_file
       ask: false             # no choose/confirm, even interactively
+    allow:                   # what runs without the approval question
+      - edit_file            # no confirmation before edit_file/write_file
+      - write_file
+      - ~/.cache             # an extra directory the writers and the sandbox may write
 ```
 
 Each set below is documented the same way: its configuration keys, then one
@@ -53,11 +54,13 @@ facts hold for all of them:
   items are [grants](#grants): a session grant comes back with `iota resume`
   and `/session` and is gone after `/new`, a project grant applies to every
   session and every `-m` run in the project, and both are listed and taken
-  back with [`/allow`](./slash-commands.md#allow). A non-interactive `-m` run
-  has nobody to ask and refuses every gated call no grant covers with: `<tool>
-  was not executed: it requires interactive approval, which is unavailable in
-  this non-interactive run. Set the toolset's auto-approve option
-  (tools.code.auto_write / tools.shell.auto_run) to permit it here.`
+  back with [`/allow`](./slash-commands.md#allow). What runs unasked in every
+  session is the agent's [`allow:`](./config-reference.md#allow) list, and
+  for one run `--allow <target>`. A non-interactive `-m` run has nobody to ask
+  and refuses every gated call none of them covers with: `<tool> was not
+  executed: it needs the user's approval, which this non-interactive run
+  cannot ask for; pass --allow <tool>, or list it in the agent's `allow:`, to
+  permit it here.`
 - **Parallelism**: the calls a round issues together run concurrently only when
   every one of them says it may; results come back in call order regardless.
 - **Presentation** is one of three: *Group* (folded into the activity panel),
@@ -80,16 +83,22 @@ every platform and under every interpreter.
 |---|---|---|---|
 | `sandbox` | `auto` \| `off` | `auto` | `auto` sandboxes every call when the OS has a sandbox (Seatbelt on macOS, bubblewrap on Linux) and runs unsandboxed with approval where it has none; `off` never sandboxes. An empty value reads as `auto`; anything else refuses the set: `sandbox must be "auto" or "off", got "on"` |
 | `network` | boolean | `false` | whether sandboxed commands may use the network. Meaningless without a sandbox |
-| `auto_run` | boolean | `false` | run every call without approval, sandboxed or not — including the [iota exception](#the-iota-exception) and every call of an unsandboxed set. What makes `-m` runs able to use the tool where no sandbox exists |
 
-Extra writable directories are not a `shell` key: list them in the top-level
-[`write_roots:`](#write-roots), which the `code` set shares. A config that
-still has `tools.shell.write` loses the shell tool, with the warning
-``toolset "shell": `write` is gone — list extra writable roots in the
-top-level `write_roots:` (shared by the shell and code sets) (ignored)``.
+Any other key fails the load (`agents.a.tools.shell.netwrok: unknown key (want
+sandbox, network)`). Running without the approval question is not a `shell`
+key: it is `shell` in the agent's [`allow:`](./config-reference.md#allow),
+which then runs every call unasked, sandboxed or not — including the [iota
+exception](#the-iota-exception) and every call of an unsandboxed set; that is
+what makes `-m` runs able to use the tool where no sandbox exists. Extra
+writable directories are not a `shell` key either: they are directories in
+the same `allow:`, which the `code` set shares (see [Directories in
+`allow:`](#allow-dirs)). A config that still has `tools.shell.write` loses the
+shell tool, with the warning ``toolset "shell": `write` is gone — list each
+extra writable directory in the agent's `allow:` (shared by the shell and code
+sets) (ignored)``.
 
 A value that is not a mapping is refused: `config must be a mapping (sandbox,
-network, auto_run): <decode error>`. On Windows a machine with no
+network): <decode error>`. On Windows a machine with no
 interpreter at all refuses the set too — `no shell interpreter found: tried Git
 Bash (install Git for Windows or set IOTA_GIT_BASH_PATH), pwsh.exe,
 powershell.exe and cmd.exe — set IOTA_SHELL to name one` — where Unix registers
@@ -111,13 +120,14 @@ it.
 | `timeout` | integer | no — none | kill the command after this many seconds. Left out, the command runs until it exits — a job outlives the call, never iota. Any positive number; `0`, a negative or a non-number is refused before anything runs: `timeout must be a positive number of seconds` |
 | `background` | boolean | no — `false` | do not wait at all: start the command and return at once with a job id — for servers, watchers, a child agent. A foreground call waits 20 s and then yields on its own (see [Background jobs](#background-jobs)), so the flag is for what should never be waited on |
 
-**Approval**: with `auto_run: true`, never. Otherwise every call of an
-unsandboxed set (no sandbox on the machine, or `sandbox: off`), and in a
-sandboxed set only the call that [leaves it](#the-iota-exception).
+**Approval**: never when `allow:`, `--allow` or a [grant](#grants) holds
+`shell`. Otherwise every call of an unsandboxed set (no sandbox on the
+machine, or `sandbox: off`), and in a sandboxed set only the call that [leaves
+it](#the-iota-exception).
 **Parallel**: always — a round's consecutive `shell` calls run as one batch,
-results in call order — with one exception: a sandboxed set's iota call that
-must be asked about takes the serial path, because the batch has no approval
-gate. (Every other toolset keeps the conservative rule that only read-only
+results in call order — with one exception: a call that must be asked about
+(every call of an unsandboxed set nothing allows, a sandboxed set's iota call)
+takes the serial path, because the batch has no approval gate. (Every other toolset keeps the conservative rule that only read-only
 calls batch; here the model wrote both command lines, and `&`/`wait`/`xargs
 -P` inside one call were never gated either.) **Presentation**: Group; the
 header is the command itself — `[shell git status]`, with dim brackets, the
@@ -154,11 +164,11 @@ and approval where there is none:
 - **macOS**: Seatbelt, through the system's own `/usr/bin/sandbox-exec`.
   **Linux**: [bubblewrap](https://github.com/containers/bubblewrap) (`bwrap`
   on `PATH`, if installed). **Windows**: no sandbox exists; every call runs
-  with your permissions and asks unless `auto_run` waives it.
+  with your permissions and asks unless `shell` is allowed.
 - **Writes are confined** to this set of directories, in this order, duplicates
   dropped: the project root; the run's temp directory; `/tmp`; the cache
-  directory (created if missing); then every [`write_roots:`](#write-roots)
-  entry and `--add-dir` value; then every [directory grant](#grants), read
+  directory (created if missing); then every directory of the agent's
+  [`allow:`](#allow-dirs) and of `--allow`; then every [directory grant](#grants), read
   again at each call, so a directory allowed mid-session is writable from the
   next command. Everything else fails inside the command with the OS's error
   (`Operation not permitted` on macOS, `Read-only file system` on Linux),
@@ -178,8 +188,9 @@ and approval where there is none:
   stop to ask for a directory: [`/allow <dir>`](./slash-commands.md#allow) is
   how you make one writable before it runs. Where no sandbox is available or
   with `sandbox: off`, every call asks instead (allow once / for this session
-  / for this project / deny), and `-m` runs refuse it unless a project grant
-  for `shell` covers it — `auto_run: true` waives both.
+  / for this project / deny), and `-m` runs refuse it unless `shell` is in
+  the agent's `allow:`, passed as `--allow shell`, or granted for the project
+  — any of which also stops the question in a chat.
 
 The tool's description tells the model which regime it is in: `Commands run
 inside an OS sandbox: file writes are confined to the project root and
@@ -189,8 +200,8 @@ followed by one sentence naming the protected files and the commands that
 fail on them, so the model asks you instead of fighting the sandbox, and one
 more: `The user can make another directory writable with /allow <dir>: when a
 command must write outside these, ask for that instead of working around it.`
-A failed command's result carries no extra hint. With
-`write_roots:` set, the line names them: `confined to the project root, the
+A failed command's result carries no extra hint. With directories in
+`allow:` or `--allow`, the line names them: `confined to the project root, the
 extra write roots (/Users/you/scratch, …) and temp/cache directories`.
 Unsandboxed, it reads `Commands run WITHOUT a sandbox on this system, with
 the user's full permissions — be conservative.`
@@ -220,12 +231,14 @@ binary is one you installed. The rule is conservative by construction:
   in the sandbox, where the write is refused. The model asks you to run them
   in your own terminal;
 - nor does a line that chooses what the child loads, starts or may write:
-  one carrying `-c`, `--config`, `--mcp` or `--add-dir` (the word or its `=`
-  form) anywhere among its arguments stays in the sandbox.
+  one carrying `-c`, `--config`, `--mcp` or `--allow` (the word or its `=`
+  form) anywhere among its arguments stays in the sandbox — `iota run a
+  --allow shell -m …` let out would be a child with an unconfined, unasked
+  shell.
 
-The only effect is the missing sandbox: `network:` and `write_roots:` are the
-sandbox's settings and do not apply. **Approval is not waived**: a sandboxed
-set without `auto_run` asks about such a call the way an unsandboxed set asks
+The only effect is the missing sandbox: `network:` and the writable
+directories are the sandbox's settings and do not apply. **Approval is not
+waived**: a sandboxed set whose `shell` nothing allows asks about such a call the way an unsandboxed set asks
 about every call, and the prompt and the call header carry `(outside the
 sandbox)` — what you are being asked is not "may this run" but "may this run
 where the others do not". Windows and `sandbox: off` have nothing to leave.
@@ -337,8 +350,8 @@ iota has no delegation tool: a child agent is `iota run <agent> -m "<task>"`
 run from the `shell` tool, which is why the set is the one that matters most.
 The child is a full run of that `agents:` entry — its own model, tools, MCP
 servers and session. Start it with `background: true` and its answer comes back
-as the notice above. For it to write without a user to ask, set
-`tools.code.auto_write` / `tools.shell.auto_run` on that agent. The child runs
+as the notice above. For it to write without a user to ask, list `edit_file`,
+`write_file` and `shell` in that agent's `allow:`. The child runs
 outside the parent's sandbox (the [exception](#the-iota-exception) above) and
 is isolated by its own agent's configuration — its own `shell` sandbox, its own
 approvals — so the parent's `network: false` is not in its way. How to
@@ -352,8 +365,8 @@ The coding loop: `glob` and `grep` locate files, `list_dir` explores,
 string replacement) / `write_file` change files. **Reading is open, writing is
 confined**: the readers take any path, while the writers write inside the
 **project root** — the git root of the working directory, or the working
-directory itself outside a repository — the [`write_roots:`](#write-roots)
-directories and the directories you [grant](#grants), and ask you about
+directory itself outside a repository — the directories of the agent's
+[`allow:`](#allow-dirs) and the directories you [grant](#grants), and ask you about
 anything else. Verification — builds, tests —
 goes through the `shell` set, so enable it alongside.
 
@@ -361,12 +374,18 @@ goes through the `shell` set, so enable it alongside.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `auto_write` | boolean | `false` | `edit_file` and `write_file` run without approval inside the project root, the `write_roots:` and the granted directories — and therefore in `-m` runs, which otherwise refuse them. A write outside them, or to a protected path, still asks |
 | `read_only` | boolean | `false` | leave the two writers out entirely: the model sees `glob`, `grep`, `list_dir` and `read_file` alone. A tool the model cannot see is never attempted and never refused — the reviewer's setting |
 
-Both together are refused: `read_only and auto_write contradict each other:
-auto_write approves writes the set does not offer`. A value that is not a
-mapping: `config must be a mapping (auto_write, read_only): <decode error>`.
+Any other key fails the load (`agents.a.tools.code.auto_wrtie: unknown key
+(want read_only)`). Writing without the approval question is `edit_file` and
+`write_file` in the agent's [`allow:`](./config-reference.md#allow) — one can
+be allowed without the other: each then runs unasked inside the project root,
+the `allow:` directories and the granted ones, and therefore in `-m` runs,
+which otherwise refuse it. A write outside them, or to a protected path, still
+asks. A read-only set and an allowed writer together fail the load:
+`agents.a.allow[0]: edit_file is not one of this agent's tools
+(tools.code.read_only leaves the writers out)`. A value that is not a mapping:
+`config must be a mapping (read_only): <decode error>`.
 
 Shared by all six tools:
 
@@ -383,9 +402,9 @@ Shared by all six tools:
   record and refuse when the file has changed since — the model can never
   blind-overwrite your edits.
 - **Output cap** 64 KB (65,536 bytes) per call.
-- **Approval**: the four readers never ask; the two writers ask unless
-  `auto_write: true` — and always ask outside the roots or for a protected
-  path. **Parallel**: the readers always, the writers never.
+- **Approval**: the four readers never ask; a writer asks unless `allow:`,
+  `--allow` or a grant holds it — and always asks outside the roots or for a
+  protected path. **Parallel**: the readers always, the writers never.
   **Presentation**: readers Group, writers Expanded — a successful edit posts
   the unified diff as the call's block; the model's result text stays short.
   The header of a file tool is its path (`[read_file src/main.rs]`).
@@ -526,15 +545,14 @@ sort the call into one of four cases:
 
 | Case | In a chat | In a `-m` run |
 |---|---|---|
-| inside the project root, a `write_roots:` or `--add-dir` directory, or a granted one | asks unless `auto_write: true` or a grant for the tool | refused unless `auto_write: true` or a project grant for the tool |
-| outside every root | **always asks**, even with `auto_write: true` | refused: pass `--add-dir`, or list the directory in `write_roots:` |
+| inside the project root, an `allow:` or `--allow` directory, or a granted one | asks unless `allow:`, `--allow` or a grant holds the tool | refused unless `allow:`, `--allow` or a project grant holds the tool |
+| outside every root | **always asks**, even when the tool is allowed | refused: pass `--allow <dir>`, or list the directory in the agent's `allow:` |
 | a [protected path](#protected-paths) | **always asks**, allow once only | refused: make the change yourself |
 | the real location cannot be worked out | refused | refused |
 
 A symlink inside the project that leads out of every root is a write outside
 every root: the prompt shows where the link really points, and the write
-lands there. With [`outside_writes: refuse`](#outside-writes) both the outside
-and the protected rows are refused without a prompt.
+lands there.
 
 **The prompt for an outside write** names the real location, absolute, and
 marks it: `write_file /Users/you/notes/todo.md (outside the project root) —
@@ -551,35 +569,42 @@ inside write) never covers an outside one.
 
 **The refusals** the model reads: `path is outside the project root
 (/Users/you/project): ../notes/todo.md` — with `) and the extra write roots
-(…` inside the parentheses when `write_roots:`, `--add-dir` or a directory
-grant adds any — followed in a `-m` run by `— writing there needs the user's
-approval, which this non-interactive run cannot ask for; pass --add-dir
-<dir>, or list its directory in the top-level `write_roots:`, to allow it`. A path whose real location cannot be worked out is `cannot verify
-<path> inside the project root (…)`. The writers' descriptions name the
-static roots (`write_roots:` and `--add-dir`), and in a chat add `Outside that, the user is asked to approve a write
+(…` inside the parentheses when `allow:`, `--allow` or a directory grant adds
+any — followed in a `-m` run by `— writing there needs the user's approval,
+which this non-interactive run cannot ask for; pass --allow <dir>, or list
+its directory in the agent's `allow:`, to allow it`. A path whose real
+location cannot be worked out is `cannot verify <path> inside the project root
+(…)`. The writers' descriptions name the directories of `allow:` and
+`--allow`, and in a chat add `Outside that, the user is asked to approve a write
 there first.`, so the model does not take a refusal as final.
 
-#### `write_roots:` {#write-roots}
+#### Directories in `allow:` {#allow-dirs}
 
-A **top-level** key — beside `providers:` and `agents:`, not under `tools:` —
-listing directories outside the project that both the code writers and a
-sandboxed shell may write. One list for both, every agent:
+A directory in an agent's [`allow:`](./config-reference.md#allow) is one both
+the code writers and that agent's sandboxed shell may write — one list for
+both:
 
 ```yaml
-write_roots:
-  - ~/scratch          # ~ is your home
-  - ../shared-lib      # relative to the project root
+agents:
+  coder:
+    tools: { shell: {}, code: {} }
+    allow:
+      - ~/scratch          # ~ is your home
+      - ../shared-lib      # relative to the project root
 ```
 
-Every config file of the stack adds its entries. A blank entry fails the
-config load (`write_roots[0]: …`); a directory that does not exist yet is
-accepted; a directory whose real location cannot be worked out refuses the
-`code` set (`cannot resolve the write root <path>`). The model is told the
-list in the writers' and the shell's descriptions. `agents.<name>.write_roots`
-is refused: the key is top level only.
+The list is the agent's own: another agent writes only what its own `allow:`
+names. A directory that does not exist yet is accepted. One that exists and is
+not a directory, one whose real location cannot be worked out, and one that is
+itself a [protected path](#protected-paths) (`./.git/hooks`) refuse the run at
+start-up, naming the entry (`agents.coder.allow[1]: ../file is not a
+directory`). What is stored is the directory's real location, so a directory
+later replaced by a symlink stops being writable, for the writers and the
+sandbox alike. The model is told the directories in the writers' and the
+shell's descriptions.
 
-For one run, [`iota run|resume … --add-dir <dir>`](./quick-start.md#flags)
-(repeatable) adds a directory the same way, after the config's entries. A
+For one run, [`iota run|resume … --allow <dir>`](./quick-start.md#flags)
+(repeatable) adds a directory the same way, after the agent's entries. A
 relative value is against the working directory, not the project root, and the
 flag is not kept with the session: a resume that wants it passes it again.
 
@@ -591,7 +616,7 @@ and take it back in `/allow`'s panel. There are two kinds:
 
 | Grant | What it does |
 |---|---|
-| a directory | the directory's real location and everything under it becomes a write root — for `edit_file`/`write_file` **and** for the sandboxed `shell`, read again at each call, exactly as a `write_roots:` entry. A write there is then asked or not by `auto_write` like any write inside the project |
+| a directory | the directory's real location and everything under it becomes a write root — for `edit_file`/`write_file` **and** for the sandboxed `shell`, read again at each call, exactly as a directory in `allow:`. A write there is then asked or not like any write inside the project: unasked when the writer is allowed |
 | a tool | removes the question for one tool: `shell`, `edit_file`, `write_file` (or an [MCP tool](./mcp.md#approval)). It never answers a write outside the roots or to a protected path |
 
 Each lasts at one of two levels, and both only add:
@@ -601,41 +626,38 @@ Each lasts at one of two levels, and both only add:
 | this session | the session: `iota resume` and `/session` bring it back, `/new` starts without it | the session's own record (in memory until `/save` in a `--no-save` chat) |
 | this project | until you revoke it: every session and every `-m` run rooted at the project | `~/.iota/sessions/projects/<project>/grants.json` |
 
-The model is told the directories in force — the static roots and the
-directory grants — on the `write roots:` line of its
+The model is told the directories in force — those of `allow:` and
+`--allow`, and the directory grants — on the `write roots:` line of its
 [environment](./system-prompt.md), which is rewritten on the next turn after a
-grant changes. The tool descriptions keep naming the static roots only.
+grant changes. The tool descriptions keep naming the `allow:` and `--allow`
+directories only.
 
-**The permanent forms are configuration**, the same for every project:
+**The standing form is configuration**: every grant has the same spelling in
+the agent's [`allow:`](./config-reference.md#allow) (every run of that agent)
+and in `--allow` (one run) — `~/scratch`, `shell`, `edit_file`, `write_file`,
+`github:search_issues`, `"github:*"` ([MCP tools](./mcp.md#approval)). What
+they give is not a grant: `/allow`'s **Static** tab lists it, and you take it
+back by editing the file or dropping the flag.
 
-| Grant | Its permanent form |
-|---|---|
-| a directory | [`write_roots:`](#write-roots) (every run), `--add-dir` (one run) |
-| `shell` | `tools.shell.auto_run: true` |
-| `edit_file`, `write_file` | `tools.code.auto_write: true` |
-| an MCP tool | [`mcp_servers.<name>.auto_run: true`](./mcp.md#approval) |
+Nothing — no grant, no `allow:` entry, no `--allow` — opens a [protected
+path](#protected-paths): the project's and your own `.iota.yaml`, git's hooks
+and config, and the trust record and the grants themselves under `~/.iota`. A
+granted or allowed directory that is a git repository keeps its own
+`.git/hooks` and `.git/config` protected. No config key writes a grant either:
+a repository's `.iota.yaml` cannot ship one, and its `allow:` takes effect only
+once you have [trusted](./config-file.md#trusting-a-project-config) the file.
 
-None of them — no grant, no `write_roots:` entry, no `--add-dir`, no
-`auto_write` or `auto_run` — opens a [protected path](#protected-paths): the
-project's and your own `.iota.yaml`, git's hooks and config, and the trust
-record and the grants themselves under `~/.iota`. A granted directory that is
-a git repository keeps its own `.git/hooks` and `.git/config` protected, as a
-`write_roots:` entry does. No config key writes a grant either: a repository's
-`.iota.yaml` cannot ship one.
-
-#### `outside_writes:` {#outside-writes}
-
-Also top level: `ask` (the default) puts a write outside every root to you as
-above; `refuse` refuses it with no prompt, as iota did before 0.9.0. It only
-tightens: once a config file of the stack says `refuse`, a later `ask` changes
-nothing. To let a directory in silently, in every mode, list it in
-`write_roots:` instead.
+A write outside every root always asks in a chat and is refused in a run with
+nobody to ask; there is no setting that refuses it without the prompt. The
+keys that used to say this differently fail the load naming their replacement:
+`write_roots:` and `--add-dir` are a directory in `allow:` and `--allow`,
+`tools.code.auto_write` and `tools.shell.auto_run` are `edit_file`,
+`write_file` and `shell` in `allow:`, and `outside_writes:` is gone.
 
 #### Protected paths
 
 A few files are never written unasked — not by the writers, not by a
-sandboxed shell command — whatever `auto_write`, `auto_run`, `write_roots:`,
-`--add-dir` or a grant say:
+sandboxed shell command — whatever `allow:`, `--allow` or a grant say:
 
 | Path | Why |
 |---|---|
@@ -650,16 +672,14 @@ sandboxed shell command — whatever `auto_write`, `auto_run`, `write_roots:`,
 `<project>/.git` and `~/.iota` themselves cannot be renamed or replaced either
 (their other contents stay writable). In a worktree made with `git worktree
 add`, the main repository's `.git/hooks` and `.git/config` and the worktree's
-`config.worktree` are covered too, and so is the `.git` of any `write_roots:`,
-`--add-dir` or granted directory that is a repository. Listing `<project>/.git` in `write_roots:`
-opens the rest of `.git`, not these files.
+`config.worktree` are covered too, and so is the `.git` of any allowed or
+granted directory that is a repository.
 
 The writers ask about a protected file **every time**, one file at a time,
 naming it and why — `write_file /Users/you/project/.git/hooks/pre-commit
 (protected): git executes the files in .git/hooks on the user's next git
-command — allow?` — and offer only **Allow once** and **Deny**. In a `-m` run,
-or under `outside_writes: refuse`, the write is refused and the message says
-why. `~/.iota/trusted.json` and `~/.iota/sessions/` are never written by a
+command — allow?` — and offer only **Allow once** and **Deny**. In a `-m` run
+the write is refused and the message says why. `~/.iota/trusted.json` and `~/.iota/sessions/` are never written by a
 tool and never asked about: `… no tool may write it; the user trusts a project
 config by running `iota config trust` themselves`, and `… no tool may write
 it; iota alone writes the sessions and the grants they hold`.
