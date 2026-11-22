@@ -139,7 +139,7 @@ agents:                      # usage: how a model is driven
     allow:                   # what runs without the approval question (absent = everything that asks, asks)
       - ~/scratch            #   a directory the writers and the sandboxed shell may write
       - edit_file            #   a built-in tool that asks: shell, edit_file, write_file
-      - github:search_issues #   one MCP tool; "github:*" for all of the server's
+                             #   (and <server>:<tool> or "<server>:*" for an MCP server's tools)
 
   reviewer:
     model: sonnet
