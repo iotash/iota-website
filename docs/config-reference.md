@@ -55,14 +55,18 @@ file named with `-c` are never gated.
 
 Started on a terminal, iota stops before anything else runs, shows what the
 file would do — every MCP command or url, a provider `url`, a `${…}` key or
-header and where it is sent, `system_file`, a loosened `sandbox`, `auto_run`,
-`network` or `auto_write`, `write_roots:` and `outside_writes:` — and asks:
+header and where it is sent, `system_file`, a loosened `sandbox` or
+`network`, and every [`allow:`](#allow) entry of every agent it defines, one
+line each with what it does — and asks:
 
 ```text
 /Users/you/project/.iota.yaml is a project config you have not trusted.
 It sets:
   mcp_servers.db: runs npx -y @acme/db-mcp
   agents.default.tools.shell.network: true
+  agents.default.allow: ../shared-lib (a directory its tools may write)
+  agents.default.allow: shell (runs without asking, outside the sandbox too)
+  agents.default.allow: db:* (every tool of db runs without asking)
 Trust it? [t]rust / [N]ot now
 ```
 
@@ -123,7 +127,8 @@ models:
 agents:
   default:
     model: gpt                # the model a run starts on; leave it out to start in the picker
-    # choices: [gpt]          # what /model and -M pick from; absent = `model:` alone
+    # choices: [gpt]          # what /model and -M pick from; absent = just `model:`
+                              # (and with no `model:`, every `models:` entry)
     # Your own instructions. iota already tells the model what it runs inside and where (the
     # built-in harness prompt: identity, environment, and its own command line when `shell` is on).
     system: "You are a careful coding assistant."
@@ -132,15 +137,16 @@ agents:
       shell:                  # shell commands, with a sandbox by default
     # mode: agent             # AGENTS.md overlay, skills, project-scoped sessions
   # A bot (`iota run coder`): one conversation that never ends, with a memory of its own. By default it
-  # stops at every approval gate and waits for you; the two `auto_` keys below are what let it carry on
-  # unattended. They are an opt-in, and only sensible with the sandbox on — where no sandbox is available,
-  # `auto_run` runs every command unconfined without asking.
+  # stops at every approval gate and waits for you; its `allow:` list is what lets it carry on unattended.
+  # It is an opt-in, and only sensible with the sandbox on — where no sandbox is available, allowing
+  # `shell` runs every command unconfined without asking.
   # coder:
   #   mode: bot
   #   model: gpt
   #   tools:
-  #     code: { auto_write: true }                  # writes and edits land without a yes
-  #     shell: { sandbox: auto, auto_run: true }    # commands run confined, none waits for a yes
+  #     code:
+  #     shell: { sandbox: auto }
+  #   allow: [edit_file, write_file, shell]   # writes, edits and commands run without a yes
 
 # MCP servers go under a top-level `mcp_servers:` block, which `iota mcp add <name> -- <command>`
 # (or `--url <url>`) writes and `iota mcp remove <name>` edits for you.
@@ -161,9 +167,9 @@ f.yaml` are the same invocation.
 
 ## Top level
 
-Seven keys are accepted. Four are maps from a name you choose to an entry — a
-name is any YAML string, and it is what the other layers refer to — and three
-are settings for every agent.
+Five keys are accepted. Four are maps from a name you choose to an entry — a
+name is any YAML string, and it is what the other layers refer to — and one is
+a setting of your terminal.
 
 | Key | Holds | Reference |
 |---|---|---|
@@ -171,41 +177,17 @@ are settings for every agent.
 | `models:` | configured models — which provider serves a model id, and the properties of the model itself | [`models.<name>`](#modelsname) |
 | `agents:` | usages — what a run names: a model and its choices, a prompt, tools, MCP servers, session switches | [`agents.<name>`](#agentsname) |
 | `mcp_servers:` | the MCP servers an agent may select | [`mcp_servers.<name>`](#mcp_serversname) |
-| `write_roots:` | a list of directories outside the project that the code tools and a sandboxed shell may write | [below](#write_roots) |
-| `outside_writes:` | `ask` or `refuse`: what a code-tool write outside every root does | [below](#outside_writes) |
 | `mouse:` | whether the chat uses the mouse | [below](#mouse) |
 
 Any other top-level key fails the load:
 
 ```text
-config ~/.iota.yaml: agnets: unknown top-level key (want providers:, models:, agents:, mcp_servers:, write_roots:, outside_writes:, mouse:)
+config ~/.iota.yaml: agnets: unknown top-level key (want providers:, models:, agents:, mcp_servers:, mouse:)
 ```
 
 An empty document, and an empty section (`providers:` with nothing under it),
-are both fine.
-
-### `write_roots:`
-
-A list of paths, default empty. Each is a directory `edit_file`/`write_file`
-may write without the outside-the-project prompt and a sandboxed `shell`
-command may write — one list for both. `~` is your home; a relative path is
-taken from the project root. Every file of the stack adds its entries, and two
-that name the same directory count once. A blank entry fails the load
-(`write_roots[0]: …`); a directory that does not exist yet is accepted. Under
-`agents:` the key is refused. The [protected
-paths](./builtin-toolsets.md#protected-paths) stay closed inside these
-directories too. This replaces `tools.shell.write`, which is gone: a config
-that still has it loses the shell tool, with a warning.
-
-### `outside_writes:`
-
-`ask` (default) or `refuse`. With `ask`, an `edit_file`/`write_file` outside
-the project and the `write_roots:` is put to you in a chat — even with
-`auto_write: true` — and refused in a `-m` run. With `refuse` it is refused
-with no prompt everywhere, and so is a write to a protected path. It only
-tightens: once a file of the stack says `refuse`, a later `ask` changes
-nothing. See [Where the writers may
-write](./builtin-toolsets.md#where-the-writers-may-write).
+are both fine. There is no top-level list of writable directories: a directory
+is an [`allow:`](#allow) entry of each agent that may write it.
 
 ### `mouse:`
 
@@ -326,6 +308,114 @@ must have at least one model; everything else is optional.
 | `temperature` | number | unset | overrides the model's default; same range |
 | `top_p` | number | unset | overrides the model's default; same range |
 | `max_tokens` | integer | unset | overrides the model's ceiling; same rule. A session records it and `iota resume` restores it; a bot reads it from the config on each start. There is no `/model` tab or flag for it |
+| `allow` | list of strings | absent = nothing | what this agent may do without being asked: directories its tools may write, built-in tools and MCP tools that run without the approval question. See [`allow:`](#allow) below |
+
+### `allow:`
+
+What the agent may do without being asked, written up front. Each entry is one
+target of [`/allow`](./slash-commands.md#allow), without the scope word:
+
+```yaml
+agents:
+  coder:
+    mode: agent
+    tools: { shell: {}, code: {} }
+    mcp_servers: [github]
+    allow:
+      - ~/scratch              # a directory: the writers and the sandbox may write there
+      - ../shared-lib          # relative: against the project root, as /allow reads it
+      - edit_file              # a built-in tool: a write inside the roots is not asked
+      - write_file
+      - shell                  # …a call that would ask (unsandboxed, or leaving the sandbox) is not asked
+      - github:search_issues   # one tool of an mcp_servers: entry
+      - "github:*"             # every tool of it, those it exposes later included
+```
+
+`allow:` is a list of strings — a single string is refused too, so a list that
+grows by one never changes shape. Absent or empty, nothing is allowed up front:
+every call that asks, asks. An entry is read in `/allow`'s order, with the
+agent's own `mcp_servers:` names in place of the connected ones:
+
+1. **A server's whole name, then `:` and a tool** — the longest name among the
+   servers this agent loads, so a server named `./srv.py` is never read as a
+   path. The tool is the server's own tool name, or `*` for all of them.
+2. **A directory** — it starts with `~` or `.`, or has a root: `/x` on Unix;
+   `/x`, `\x`, `C:\x`, `C:/x` and `\\server\share` on Windows. `C:x`, relative
+   to a drive with no root, is not one. `~` is your home; a relative directory
+   hangs off the project root. It does not have to exist yet (`out/` is
+   routinely made by the first build).
+3. **Anything else holding a `:`** — `<server>:<tool>`, split at its last `:`.
+4. **A bare word** — a built-in tool, by the name the model sees. Only the
+   three that ask take one: `shell`, `edit_file`, `write_file`.
+
+There is **no scope word** in a file: the file is the level, so a last word
+`project` is part of the target (`~/my project` is a directory). A tool entry
+never answers a write outside every root or to a [protected
+path](./builtin-toolsets.md#protected-paths) — those are asked every time —
+and a directory entry that is itself protected is refused.
+
+**What is refused at the load**, for every agent of every file, so a mistake
+in an agent nobody runs today is still found — each as
+`agents.<name>.allow[<i>]: <message>` (the whole key, `agents.<name>.allow:
+expected a list`, for a scalar or a map):
+
+| Case | Message |
+|---|---|
+| not a string | `expected a string (a directory, a built-in tool or <server>:<tool>)` |
+| blank | `is blank` |
+| `~` with no home directory | `"~" needs a home directory, and this run has none` |
+| `:` with nothing before it | `expected a directory (starting with /, ~ or .), a built-in tool or <server>:<tool>` |
+| no such built-in | `no built-in tool named "<t>" (tools that ask: shell, edit_file, write_file)` |
+| a built-in that never asks | `<t> never asks (tools that ask: shell, edit_file, write_file)` |
+| a built-in of a set the agent lacks | `<t> is not one of this agent's tools (tools.<set> is not enabled)` |
+| a writer of a read-only `code` set | `<t> is not one of this agent's tools (tools.code.read_only leaves the writers out)` |
+| no such server | `no mcp_servers entry named "<s>" (entries: a, b)` |
+| a server the agent does not load | `"<s>" is not one of this agent's mcp_servers (it loads: a, b)` |
+| a server with no tool | `"<s>:" names no tool: write <s>:<tool> or <s>:*` |
+
+**What is refused at start-up**, for the run's agent only, with the same
+coordinate: `<dir> is not a directory` (it exists and is something else),
+`cannot work out where <dir> is`, and `<real path> is protected: <why>`. A
+repeated entry is kept once. A tool name of an MCP server cannot be checked
+at the load — the server is not connected yet — so a chat says it once the
+server's tools are known, `⚠ agents.<name>.allow: server "github" has no tool
+"serch_issues"`, and the entry allows nothing meanwhile.
+
+**Per agent, and replaced whole.** The list is an `agents.<name>` key only;
+there is no top-level one. An `agents:` entry merges whole, by name, so a
+project file that defines `coder` replaces the home's `coder` — its `allow:`
+included — and an agent the project file does not define keeps the home's
+list untouched. To share a list between agents, YAML's own alias repeats it
+exactly: `allow: &dirs [~/scratch, ~/notes]` on one agent, `allow: *dirs` on
+the others.
+
+**For one run**, `iota run|resume … --allow <target>` (repeatable) takes the
+same targets, with two differences: a directory is relative to the **working
+directory**, as it is typed in a shell, and a `--mcp` server can be named by
+its whole flag value (`--allow 'npx -y @acme/mcp:*'`). Its refusals start
+with `--allow: `. It is not kept with the session: a resume that wants it
+passes it again.
+
+**Read-only in the chat.** What `allow:` and `--allow` give is not a grant:
+bare `/allow` lists it under its **Static** tab (`allow:   /Users/you/scratch`,
+`allow:   shell`, `--allow  /data/out`) and cannot revoke it — you edit
+`agents.<name>.allow`, or drop the flag. `/allow` refuses to grant again what
+they already give: `shell already runs without asking (allow:)`.
+
+**Trust.** A project's `.iota.yaml` may carry `allow:`, and nothing in it
+takes effect until you have [trusted](#trusting-a-project-config) those exact
+bytes; the trust prompt shows one line per entry, as written, with what it
+does (`agents.coder.allow: github:* (every tool of github runs without
+asking)`). It fills no grant file: the project's grants live under `~/.iota`,
+where no repository can write them.
+
+The keys this replaces fail the load whatever their value, each naming what to
+write instead: `write_roots:` → a directory in `allow:` (or `--allow <dir>`),
+`tools.code.auto_write` → `allow: [edit_file, write_file]`,
+`tools.shell.auto_run` → `allow: [shell]`, `mcp_servers.<name>.auto_run` →
+`"<name>:*"` in each agent's `allow:`, and `outside_writes:` is gone (a write
+outside every root asks, and a run with nobody to ask refuses it); `--add-dir`
+is now `--allow`.
 
 ### `mode: agent` replaces `workspace: true`
 
@@ -336,7 +426,7 @@ config that still says `workspace:` fails to load with the plain unknown-key
 error, whose list names its replacement:
 
 ```text
-agents.a.workspace: unknown key (want model, choices, system, system_file, tools, mcp_servers, mode, no_save, notify, description, context_window, effort, temperature, top_p, max_tokens)
+agents.a.workspace: unknown key (want model, choices, system, system_file, tools, mcp_servers, mode, no_save, notify, description, context_window, effort, temperature, top_p, max_tokens, allow)
 ```
 
 ### Bots
@@ -374,9 +464,9 @@ What follows from `mode: bot`:
   what should outlive the compaction to its memory. A compaction that fails
   twice in a row tells the host (`bot <name>: compaction failing — …`).
 - **Approvals still stop it.** A bot asks at every approval gate like any
-  other agent. `tools.code.auto_write` and `tools.shell.auto_run` are what let
-  it carry on with nobody there — the commented-out bot in the starter above
-  sets both, with the sandbox on.
+  other agent. Its [`allow:`](#allow) list is what lets it carry on with
+  nobody there — the commented-out bot in the starter above allows
+  `edit_file`, `write_file` and `shell`, with the sandbox on.
 
 ### The five layered parameters
 
@@ -392,8 +482,8 @@ hand in `/model` fits in is on [the config file](./config-file.md#the-five-layer
 
 ### Booleans
 
-Every boolean key (`no_save`, `notify`, `image`, `json_edits`, `mouse`,
-`mcp_servers.<name>.auto_run`, and the toolsets' `network`, `auto_run`, `auto_write`, `read_only`) takes the
+Every boolean key (`no_save`, `notify`, `image`, `json_edits`, `mouse`, and
+the toolsets' `network` and `read_only`) takes the
 YAML 1.1 spellings in any case, quoted or plain: `true`/`yes`/`on` and
 `false`/`no`/`off`. A null value (`no_save:` with nothing after it) reads as
 `false` — or, for `notify`, as absent. Anything else fails the decode with
@@ -419,7 +509,6 @@ by hand. A server is either **stdio** (`command`, with `args` and `env`) or
 | `client_id` | string | `""` = dynamic registration, else the Client ID Metadata Document | an OAuth client registered with the authorization server out of band |
 | `client_secret` | string | `""` = a public client | the secret paired with `client_id`, written as a `${env:VAR}` reference and expanded like every other value. Needs a `client_id`: `mcp_servers.<name>: client_secret needs a client_id` |
 | `redirect_port` | integer | absent = `17801` | with a `client_id`: the loopback port the registered redirect URI (`http://127.0.0.1:<port>/callback`) was registered with — a pre-registered client's URI must match exactly, so the port is fixed, where a client registered on the spot gets a random one. Needs a `client_id`: `mcp_servers.<name>: redirect_port needs a client_id (only a pre-registered client has a fixed redirect URI)` |
-| `auto_run` | boolean | `false` | let this server's tools run without asking. By default every MCP tool call is put to you, and a `-m` run refuses it naming this key. Only for a server you trust to act unasked — a server process is not sandboxed. See [MCP servers](./mcp.md#approval) |
 | `tool_timeout_sec` | integer (seconds) | absent = 30 minutes | how long one tool call to this server may go unanswered before it is given up; the model is then told `MCP server "<name>": no answer within <d>, so the call was given up — if the tool is meant to run that long, raise tool_timeout_sec for this server in the config`. A backstop for a server that stopped answering, not a speed limit — raise it for tools that legitimately run longer. 1 or more: `0` fails the load for a server the agent uses, before anything connects (`config mcp_servers.<name>.tool_timeout_sec 0: want 1 or more`) — it is neither "time out at once" nor "no deadline". Every call has a deadline, because a headless run or a bot has no ESC to end a call nobody answers; for a tool that runs for hours, write a large number (`86400` is a day). A call that times out does not mark the server down. `/tools` shows the deadline in effect on the server's page (see [When a server fails](./mcp.md#when-a-server-fails)) |
 
 The three client keys describe a login, so any of them on a stdio server
@@ -428,7 +517,9 @@ login, and a stdio server has nothing to log in to`) or beside `auth: none`
 (`… describe an OAuth login, which `auth: none` rules out`) fails the load.
 An unknown key here is `mcp_servers.fs.commadn: unknown key (want command,
 args, url, env, headers, defer, auth, client_id, client_secret,
-redirect_port, tool_timeout_sec, auto_run)`.
+redirect_port, tool_timeout_sec)`. Every tool of a server asks until a grant
+or an agent's [`allow:`](#allow) holds it (`"<server>:*"` for all of them);
+see [MCP servers](./mcp.md#approval).
 
 **Project scope holds references, not secrets.** `./.iota.yaml` is shared with
 everyone who clones the project, so `iota mcp add --scope project` refuses a
@@ -497,22 +588,25 @@ file. In order of precedence:
 
 | Case | Example | Message |
 |---|---|---|
-| unknown top-level key | `agnets:` | `agnets: unknown top-level key (want providers:, models:, agents:, mcp_servers:)` |
+| unknown top-level key | `agnets:` | `agnets: unknown top-level key (want providers:, models:, agents:, mcp_servers:, mouse:)` |
 | a retired key | `providers.p.model` | `providers.p.model: `model` is now a `models:` entry — write `models.<name>: <provider>:<id>` and name it in `agents.<name>.model` (or list it in `choices:`)` |
 | | `agents.a.models` | `agents.a.models: `models` is now `choices:` (what /model and -M pick from) plus `model:` (the one the run starts on)` |
 | | `providers.p.agent` | `providers.p.agent: `agent` is now `mode: agent` on an `agents:` entry` |
 | a key of another layer | `providers.p.system` | `providers.p.system: `system` belongs under `agents:` (see README, "The three layers")` |
 | | `agents.a.url` | `agents.a.url: `url` belongs under `providers:` (see README, "The three layers")` |
 | an unknown key | `providers.p.kye` | `providers.p.kye: unknown key (want type, key, url)` |
-| | `agents.a.workspace` | `agents.a.workspace: unknown key (want model, choices, system, system_file, tools, mcp_servers, mode, no_save, notify, description, context_window, effort, temperature, top_p, max_tokens)` — see [`mode: agent` replaces `workspace: true`](#mode-agent-replaces-workspace-true) |
+| | `agents.a.workspace` | `agents.a.workspace: unknown key (want model, choices, system, system_file, tools, mcp_servers, mode, no_save, notify, description, context_window, effort, temperature, top_p, max_tokens, allow)` — see [`mode: agent` replaces `workspace: true`](#mode-agent-replaces-workspace-true) |
 | a retired toolset | `agents.a.tools.agent` | `agents.a.tools.agent: the `agent` toolset is now called `skills` (the word `agent` names a config layer)` |
 | | `agents.a.tools.delegate` | `agents.a.tools.delegate: the `delegate` toolset was removed — run child agents from bash instead (see README)` |
 | an unknown toolset | `agents.a.tools.web` | `agents.a.tools.web: unknown toolset (want shell, skills, code, ask)` |
+| an unknown key of a toolset | `agents.a.tools.shell.netwrok` | `agents.a.tools.shell.netwrok: unknown key (want sandbox, network)` — `(want read_only)` under `tools.code` |
+| an `allow:` that is not a list | `agents.a.allow: shell` | `agents.a.allow: expected a list` — see [`allow:`](#allow) for what its entries are refused for |
 
 The five layered parameters are valid in both `models:` and `agents:`, so
-neither layer reports the other for them. A `models:` shorthand and a `tools:`
-value are not mappings the audit owns, so their contents are checked by the
-code that decodes them — the messages above under each key.
+neither layer reports the other for them. A `models:` shorthand is not a
+mapping the audit owns, and of a `tools:` value it reads only the keys of
+`shell` and `code`, so the rest is checked by the code that decodes it — the
+messages above under each key.
 
 There is no migration layer and no compatibility shim. A key that silently did
 nothing is the failure this audit exists to close.
