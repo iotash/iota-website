@@ -64,7 +64,7 @@ The config has three top-level maps, each answering one question:
 |-----|---------|------|
 | `providers:` | *how do I reach the API?* | `type`, `key`, `url` |
 | `models:` | *which model, and what does its protocol look like?* | `provider`, `id`, `context_window`, `defer_mode`, image knobs, `effort`/`temperature`/`top_p` defaults |
-| `agents:` | *how do I use it?* | `model`, `choices`, `system`/`system_file`, `tools`, `mcp_servers`, `mode`, `no_save`, `notify`, `description`, and overrides for `context_window`/`effort`/`temperature`/`top_p` |
+| `agents:` | *how do I use it?* | `model`, `choices`, `system`/`system_file`, `tools`, `mcp_servers`, `mode`, `no_save`, `notify`, `description`, `allow`, and overrides for `context_window`/`effort`/`temperature`/`top_p` |
 
 **A run names an agent.** `iota run <name>` resolves `agents:` and nothing
 else: the agent decides which model it drives, and the model decides which
@@ -136,6 +136,10 @@ agents:                      # usage: how a model is driven
       shell:
     mcp_servers: [github]    # load only these MCP servers; [] = none; key absent = all
     mode: agent              # project overlay (AGENTS.md) + skills + project-scoped sessions
+    allow:                   # what runs without the approval question (absent = everything that asks, asks)
+      - ~/scratch            #   a directory the writers and the sandboxed shell may write
+      - edit_file            #   a built-in tool that asks: shell, edit_file, write_file
+      - github:search_issues #   one MCP tool; "github:*" for all of the server's
 
   reviewer:
     model: sonnet
