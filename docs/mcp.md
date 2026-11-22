@@ -84,7 +84,7 @@ never offers it:
 ```text
 /allow github:search_issues            one tool, this session
 /allow github:*                        every tool of the server, this session
-/allow project github:*                every tool of the server, this project
+/allow github:* project                every tool of the server, this project
 ```
 
 The server must be connected and the tool one it lists now, so a typo is
@@ -92,45 +92,62 @@ refused rather than stored. A grant is keyed by the server's name in
 `mcp_servers:` and the tool's own name, not by the `mcp__…` name the model
 sees. Grants are listed and taken back in bare `/allow`'s **Grants** tab.
 
-For a server you trust to act unasked everywhere, set `auto_run: true` on its
-entry (default `false`) — the config-level form, which still means "never
-ask", in a chat and in `-m`, in every project:
+For a server an agent may use unasked everywhere, list it in that agent's
+[`allow:`](./config-reference.md#allow) — the config-level form, which means
+"never ask", in a chat and in `-m`, in every project:
 
 ```yaml
-mcp_servers:
-  filesystem:
-    command: npx
-    args: ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
-    auto_run: true           # its tools run without asking, in a chat and in -m
+agents:
+  coder:
+    mcp_servers: [filesystem, github]
+    allow:
+      - "filesystem:*"         # every tool of it, those it exposes later included
+      - github:search_issues   # one tool; github's others still ask
 ```
 
-A grant cannot be made for a server that is `auto_run` (`/allow: github's
-tools already run without asking (auto_run)`): there is nothing left to ask.
+It is per agent: another agent that loads the same server still asks, unless
+its own `allow:` names it. An entry must name a server the agent loads (`"gh"
+is not one of this agent's mcp_servers (it loads: filesystem, github)`); the
+tool name cannot be checked until the server is connected, so a chat warns
+once its tools are known — `⚠ agents.coder.allow: server "github" has no tool
+"serch_issues"` — and the entry allows nothing meanwhile. For one run, `--allow
+github:create_issue` (or `--allow "github:*"`) does the same from the command
+line. `/allow` refuses to grant what these already give: `github:* already
+runs without asking (allow:)`, or `(--allow)`. Neither is a grant: the
+**Static** tab lists them, and you take one back by editing the file or
+dropping the flag.
 
-A run with nobody to ask (`-m`) runs a tool that `auto_run` or a project grant
-covers, and refuses any other call, telling the model what would allow it:
+A run with nobody to ask (`-m`) runs a tool that `allow:`, `--allow` or a
+project grant covers, and refuses any other call, telling the model what would
+allow it:
 
 ```text
-mcp__github__create_issue was not executed: the tools of MCP server "github" need the user's approval, which this non-interactive run cannot ask for; set `mcp_servers.github.auto_run: true`, or allow it for the project from a chat (/allow project github:create_issue).
+mcp__github__create_issue was not executed: the tools of MCP server "github" need the user's approval, which this non-interactive run cannot ask for; pass --allow github:create_issue, list it in the agent's `allow:`, or allow it for the project from a chat (/allow github:create_issue project).
 ```
 
-A `--mcp` server has no entry to put `auto_run` in. Its grants are keyed by
-its whole command line (or URL), exactly as passed to `--mcp`, so the same
-flag value in a later run is the same server and a different one is not; a
-project grant made for it in a chat therefore lets `-m … --mcp …` run that
-tool too. Its refusal reads `…; write it as an `mcp_servers` entry with
-`auto_run: true`, or allow it for the project from a chat (/allow project
-<name>:<tool>).`, where `<name>` is how `/tools` names the server — its URL or
-its command's first word. In the **Grants** tab its rows carry the whole flag
-value: `this project  npx:push (--mcp npx -y @acme/mcp)`. Two `--mcp` servers
-that share that name cannot be told apart by `/allow`; give one an
-`mcp_servers:` entry of its own.
+(the last clause only in a run that has a project). A `--mcp` server has no
+entry for an `allow:` to name. Its grants are keyed by its whole command line
+(or URL), exactly as passed to `--mcp`, so the same flag value in a later run
+is the same server and a different one is not; a project grant made for it in
+a chat therefore lets `-m … --mcp …` run that tool too. For one run, `--allow`
+names it by that whole value:
+
+```bash
+iota run coder --mcp 'npx -y @acme/mcp' --allow 'npx -y @acme/mcp:*' -m "…"
+```
+
+Its refusal reads `…; pass --allow 'npx -y @acme/mcp:<tool>', or allow it for
+the project from a chat (/allow <name>:<tool> project).`, where `<name>` is
+how `/tools` names the server — its URL or its command's first word. In the
+**Grants** tab its rows carry the whole flag value: `this project  npx:push
+(--mcp npx -y @acme/mcp)`. Two `--mcp` servers that share that name cannot be
+told apart by `/allow`; give one an `mcp_servers:` entry of its own.
 
 :::warning
 
-**Upgrading from before v0.9.0**, when MCP tools ran unasked: a script or CI
-job that calls MCP tools in `-m` needs `auto_run: true` on each server it
-relies on, or a project grant for the tools it calls.
+**Upgrading:** `mcp_servers.<name>.auto_run` is gone and fails the load
+whatever its value; write `"<name>:*"` in the `allow:` of each agent that may
+run the server's tools without asking.
 
 :::
 
