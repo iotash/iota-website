@@ -192,8 +192,9 @@ compaction like any other turn.
 ## Running it unattended
 
 A bot still stops at every approval gate and waits for you, and the host shows
-it as waiting. What lets it carry on with nobody there is the same pair of keys
-any agent has — the starter's commented-out bot sets both:
+it as waiting. What lets it carry on with nobody there is the same `allow:`
+list any agent has — the starter's commented-out bot allows the two writers
+and `shell`:
 
 ```yaml
 agents:
@@ -201,16 +202,18 @@ agents:
     mode: bot
     model: gpt
     tools:
-      code: { auto_write: true }                 # writes and edits land without a yes
-      shell: { sandbox: auto, auto_run: true }   # commands run confined, none waits for a yes
+      code:
+      shell: { sandbox: auto }
+    allow: [edit_file, write_file, shell]   # writes, edits and commands run without a yes
 ```
 
 This hands the brakes to the sandbox: files are written and commands run
 without asking, and anything the model gets wrong you find afterwards in git
 and in the conversation. Where no sandbox is available — Windows, or Linux
-without the sandbox binary — `auto_run` runs every command unconfined, so don't
-use this there. Dropping `auto_write` and keeping `auto_run` is the cautious
-half-way. See [Built-in toolsets](./builtin-toolsets.md) for both keys.
+without the sandbox binary — allowing `shell` runs every command unconfined,
+so don't use this there. Allowing `shell` and leaving out the two writers is
+the cautious half-way. See [`allow:`](./config-reference.md#allow) for the
+list.
 
 ## Limits worth knowing
 

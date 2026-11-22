@@ -113,8 +113,8 @@ Two things differ on Windows, both about the `shell` toolset:
   PowerShell instructions instead of POSIX ones.
 - **There is no OS sandbox.** Seatbelt and bubblewrap have no Windows
   equivalent iota is willing to ship, so commands run with your full
-  permissions and every call asks for confirmation unless `auto_run: true`
-  waives it.
+  permissions and every call asks for confirmation unless `shell` is in the
+  agent's `allow:` (or passed as `--allow shell`).
 
 Everything else is the same everywhere: reading, writing and editing files,
 skills, MCP servers, the whole TUI. WSL remains a fine way to get the Unix

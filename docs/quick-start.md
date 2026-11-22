@@ -86,7 +86,7 @@ which is a run that starts from a saved session), so they go after the command.
 | `--system` | `-s` | System prompt for this run (beats the agent's `system:` / `system_file:`; what iota puts around it is on [The system prompt](./system-prompt.md)) |
 | `--config` | `-c` | Path to config file (default: `~/.iota.yaml`, then `./.iota.yaml`). Global: valid before or after the command, so `iota -c f.yaml list` and `iota list -c f.yaml` are the same |
 | `--mcp` | | MCP server (command string or URL, repeatable) |
-| `--add-dir` | | Make a directory writable for this run, like a [`write_roots:`](./builtin-toolsets.md#write-roots) entry: the code writers and the sandboxed `shell` may write it, `-m` included (repeatable; relative to the working directory, not the project root; not kept with the session) |
+| `--allow` | | Allow a target for this run without asking, like an agent's [`allow:`](./config-reference.md#allow) entry: a directory the code writers and the sandboxed `shell` may write, a built-in tool (`shell`, `edit_file`, `write_file`), `<server>:<tool>` or `<server>:*` — a `--mcp` server by its whole flag value — `-m` included (repeatable; a directory is relative to the working directory, not the project root; not kept with the session) |
 | `--no-save` | | Start ephemeral — nothing touches disk unless `/save` is run (interactive only) |
 | `--max-turns` | | Limit agentic tool turns for the whole run (`-m` only; 0 = unlimited) |
 | `--output-format` | | `-m` output: `text` (default, the reply alone) or `json` (one result object with per-round token usage) |
@@ -127,7 +127,7 @@ one line of JSON as the chat wrote it:
 |---|---|
 | `woken` | The chat was idle; the message is its next turn. |
 | `queued` (with `ahead`) | The chat is busy; the message goes in at the next safe point, after `ahead` others. |
-| `held` | Taken, but the chat's tools run without asking (`auto_run`, `auto_write`), so it asks you — *Let the model read it* or *Discard it* — before the model sees it. |
+| `held` | Taken, but the chat's tools run without asking (a tool in the agent's `allow:`, in `--allow`, or granted), so it asks you — *Let the model read it* or *Discard it* — before the model sees it. |
 | `blocked` | Not taken: the chat is waiting for you (an approval, a question, a held message). |
 | `too-large` | Not taken: the message is over 64 KiB. |
 | `refused` | Not taken: another OS user, or a request that is not this protocol (an older or newer one, not JSON, no text). |
